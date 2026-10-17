@@ -25,6 +25,7 @@ export default function FormPlan({
   textoBoton: string;
 }) {
   const [estado, enviar, pendiente] = useActionState(accion, undefined);
+  const [categoria, setCategoria] = useState(valores.categoria ?? "otro");
   const [pago, setPago] = useState((valores.coste ?? 0) > 0);
   const [importe, setImporte] = useState(valores.coste ? String(valores.coste).replace(".", ",") : "");
   const campoImporte = useRef<HTMLInputElement>(null);
@@ -42,19 +43,30 @@ export default function FormPlan({
         <label className="etiqueta" htmlFor="titulo">¿Qué plan es?</label>
         <input id="titulo" name="titulo" required maxLength={120} defaultValue={valores.titulo} className="campo" placeholder="Barbacoa en casa de Pepe" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="etiqueta" htmlFor="inicio">Fecha y hora</label>
-          <input id="inicio" name="inicio" type="datetime-local" required defaultValue={valores.inicio} className="campo" />
+      <div>
+        <p className="etiqueta" id="etiqueta-categoria">¿Qué tipo de plan es?</p>
+        <input type="hidden" name="categoria" value={categoria} />
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby="etiqueta-categoria">
+          {CATEGORIAS.map((c) => {
+            const activa = categoria === c.valor;
+            return (
+              <button
+                key={c.valor}
+                type="button"
+                aria-pressed={activa}
+                onClick={() => setCategoria(c.valor)}
+                style={activa ? undefined : { background: c.color }}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-bold transition active:scale-95 ${activa ? "bg-tinta text-white ring-2 ring-tinta ring-offset-2" : ""}`}
+              >
+                <span aria-hidden>{c.emoji}</span> {c.etiqueta}
+              </button>
+            );
+          })}
         </div>
-        <div>
-          <label className="etiqueta" htmlFor="categoria">Categoría</label>
-          <select id="categoria" name="categoria" defaultValue={valores.categoria ?? "otro"} className="campo">
-            {CATEGORIAS.map((c) => (
-              <option key={c.valor} value={c.valor}>{c.etiqueta}</option>
-            ))}
-          </select>
-        </div>
+      </div>
+      <div>
+        <label className="etiqueta" htmlFor="inicio">Fecha y hora</label>
+        <input id="inicio" name="inicio" type="datetime-local" required defaultValue={valores.inicio} className="campo" />
       </div>
       <div>
         <label className="etiqueta" htmlFor="lugar">Lugar</label>
