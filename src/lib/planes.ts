@@ -1,17 +1,17 @@
 export const CATEGORIAS = [
-  { valor: "comida", etiqueta: "Comida y bebida", color: "#FFF0CC" },
-  { valor: "fiesta", etiqueta: "Fiesta", color: "#FFDCEB" },
-  { valor: "deporte", etiqueta: "Deporte", color: "#D7F2DF" },
-  { valor: "viaje", etiqueta: "Viaje", color: "#D8E7FF" },
-  { valor: "cultura", etiqueta: "Cultura y ocio", color: "#E8DEFF" },
-  { valor: "otro", etiqueta: "Otro", color: "#ECECE8" },
+  { valor: "comida", etiqueta: "Comida", emoji: "🍕", color: "#FFF0CC", acento: "#FFC83D" },
+  { valor: "fiesta", etiqueta: "Fiesta", emoji: "🎉", color: "#FFDCEB", acento: "#FF6FA5" },
+  { valor: "deporte", etiqueta: "Deporte", emoji: "⚽", color: "#D7F2DF", acento: "#3DD68C" },
+  { valor: "viaje", etiqueta: "Viaje", emoji: "✈️", color: "#D8E7FF", acento: "#5B9DFF" },
+  { valor: "cultura", etiqueta: "Cultura", emoji: "🎬", color: "#E8DEFF", acento: "#9B7BFF" },
+  { valor: "otro", etiqueta: "Otro", emoji: "✨", color: "#ECECE8", acento: "#B8B8B0" },
 ] as const;
 
-export const etiquetaCategoria = (v: string) =>
-  CATEGORIAS.find((c) => c.valor === v)?.etiqueta ?? "Otro";
-
-export const colorCategoria = (v: string) =>
-  CATEGORIAS.find((c) => c.valor === v)?.color ?? "#ECECE8";
+const buscar = (v: string) => CATEGORIAS.find((c) => c.valor === v) ?? CATEGORIAS[5];
+export const etiquetaCategoria = (v: string) => buscar(v).etiqueta;
+export const colorCategoria = (v: string) => buscar(v).color;
+export const acentoCategoria = (v: string) => buscar(v).acento;
+export const emojiCategoria = (v: string) => buscar(v).emoji;
 
 export type Plan = {
   id: string;
@@ -25,7 +25,7 @@ export type Plan = {
   coste_por_persona: number;
   cancelado: boolean;
   profiles?: { nombre: string } | null;
-  asistencias?: { estado: string; invitados: string[] }[];
+  asistencias?: { estado: string; invitados: string[]; profiles?: { nombre: string } | null }[];
 };
 
 export function plazasOcupadas(p: Pick<Plan, "asistencias">) {
@@ -37,4 +37,14 @@ export function plazasOcupadas(p: Pick<Plan, "asistencias">) {
 export function textoCoste(c: number) {
   if (!c) return "Gratis";
   return `${Number(c).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} € por persona`;
+}
+
+/** Enlace de la portada conservando mes, día y categoría. */
+export function ruta(p: { mes?: string; dia?: string; cat?: string }) {
+  const q = new URLSearchParams();
+  if (p.mes) q.set("mes", p.mes);
+  if (p.dia) q.set("dia", p.dia);
+  if (p.cat) q.set("cat", p.cat);
+  const s = q.toString();
+  return s ? `/?${s}` : "/";
 }

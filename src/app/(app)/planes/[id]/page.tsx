@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import FormAsistencia from "@/components/FormAsistencia";
 import { fechaLarga, hora } from "@/lib/fechas";
-import { colorCategoria, etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
+import Avatar from "@/components/Avatar";
+import { colorCategoria, emojiCategoria, etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
 import { createClient } from "@/lib/supabase/server";
 import { cambiarCancelacion } from "../actions";
 
@@ -40,7 +41,10 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
           <span className="rounded-full bg-white/70 px-3 py-0.5 text-xs font-bold">{etiquetaCategoria(plan.categoria)}</span>
           {plan.cancelado && <span className="chip !border-red-700 text-red-700">Cancelado</span>}
         </div>
-        <h1 className={`text-3xl font-extrabold leading-tight tracking-tight ${plan.cancelado ? "line-through" : ""}`}>{plan.titulo}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className={`text-4xl font-extrabold leading-[1.05] tracking-tight ${plan.cancelado ? "line-through" : ""}`}>{plan.titulo}</h1>
+          <span aria-hidden className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-white/70 text-4xl">{emojiCategoria(plan.categoria)}</span>
+        </div>
 
         <dl className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl bg-white p-3">
@@ -98,9 +102,12 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         ) : (
           <ul className="space-y-2">
             {voy.map((a) => (
-              <li key={a.usuario_id}>
-                <span className="font-semibold">{a.profiles?.nombre}</span>
-                {a.invitados.length > 0 && <span className="text-apagado"> + {a.invitados.join(", ")}</span>}
+              <li key={a.usuario_id} className="flex items-center gap-3">
+                <Avatar nombre={a.profiles?.nombre ?? "?"} tam={36} />
+                <span>
+                  <span className="font-bold">{a.profiles?.nombre}</span>
+                  {a.invitados.length > 0 && <span className="text-apagado"> + {a.invitados.join(", ")}</span>}
+                </span>
               </li>
             ))}
           </ul>

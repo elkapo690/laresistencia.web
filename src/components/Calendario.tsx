@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ruta } from "@/lib/planes";
 
 const DIAS = ["L", "M", "X", "J", "V", "S", "D"];
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -13,17 +14,21 @@ function desplazar(mes: string, delta: number) {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
 }
 
-/** Calendario mensual. `conPlanes`: claves de día con algún plan. */
+/** Calendario mensual. `marcas`: día → color del primer plan; `varios`: días con más de un plan. */
 export default function Calendario({
   mes,
-  conPlanes,
+  marcas,
+  varios,
   hoy,
   seleccionado,
+  cat,
 }: {
   mes: string;
-  conPlanes: Set<string>;
+  marcas: Record<string, string>;
+  varios: Set<string>;
   hoy: string;
   seleccionado?: string;
+  cat?: string;
 }) {
   const [y, m] = mes.split("-").map(Number);
   const primero = new Date(Date.UTC(y, m - 1, 1));
@@ -36,12 +41,12 @@ export default function Calendario({
   const celdas: (number | null)[] = [...Array(huecos).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
 
   return (
-    <section className="tarjeta !p-4" aria-label="Calendario">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-extrabold first-letter:uppercase">{titulo}</h2>
+    <section className="tarjeta !p-5" aria-label="Calendario">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-xl font-extrabold first-letter:uppercase">{titulo}</h2>
         <div className="flex gap-1.5">
-          <Link href={`/?mes=${desplazar(mes, -1)}`} className="btn-claro !h-9 !w-9 !p-0" aria-label="Mes anterior">←</Link>
-          <Link href={`/?mes=${desplazar(mes, 1)}`} className="btn-claro !h-9 !w-9 !p-0" aria-label="Mes siguiente">→</Link>
+          <Link href={ruta({ mes: desplazar(mes, -1), cat })} className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold shadow-sm transition hover:bg-tinta hover:text-white" aria-label="Mes anterior">‹</Link>
+          <Link href={ruta({ mes: desplazar(mes, 1), cat })} className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-bold shadow-sm transition hover:bg-tinta hover:text-white" aria-label="Mes siguiente">›</Link>
         </div>
       </div>
 
@@ -54,34 +59,32 @@ export default function Calendario({
         {celdas.map((dia, i) => {
           if (!dia) return <div key={`h${i}`} />;
           const clave = `${mes}-${pad(dia)}`;
-          const hay = conPlanes.has(clave);
+          const color = marcas[clave];
           const esHoy = clave === hoy;
           const sel = clave === seleccionado;
           return (
             <Link
               key={clave}
-              href={sel ? `/?mes=${mes}` : `/?mes=${mes}&dia=${clave}`}
-              aria-label={`${dia}${hay ? ", hay planes" : ", libre"}`}
+              href={sel ? ruta({ mes, cat }) : ruta({ mes, dia: clave, cat })}
+              aria-label={`${dia}${color ? ", hay planes" : ", libre"}`}
               aria-current={esHoy ? "date" : undefined}
+              style={color && !sel ? { background: color } : undefined}
               className={[
-                "relative mx-auto flex h-10 w-full max-w-11 items-center justify-center rounded-xl text-sm font-semibold transition",
-                hay ? "bg-tinta text-white" : "hover:bg-suave",
-                esHoy && !hay ? "border-2 border-tinta" : "",
-                sel ? "outline outline-2 outline-offset-2 outline-tinta" : "",
+                "relative mx-auto flex h-10 w-full max-w-11 items-center justify-center rounded-full text-sm transition",
+                sel ? "bg-tinta font-extrabold text-white" : color ? "font-extrabold" : "font-semibold hover:bg-white",
+                esHoy && !sel ? "outline outline-2 outline-offset-1 outline-tinta" : "",
               ].join(" ")}
             >
               {dia}
+              {varios.has(clave) && <span className={`absolute bottom-1 h-1 w-1 rounded-full ${sel ? "bg-white" : "bg-tinta"}`} />}
             </Link>
           );
         })}
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-apagado">
-        <span className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded bg-tinta" /> Hay planes</span>
-          <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded border-2 border-tinta/20" /> Libre</span>
-        </span>
-        {mes !== mesDe(hoy) && <Link href="/" className="font-bold text-tinta underline">Ir a hoy</Link>}
+      <div className="mt-4 flex items-center justify-between text-xs text-apagado">
+        <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded-full bg-[#FF6FA5]" /> Día con plan · colores = categoría</span>
+        {mes !== mesDe(hoy) && <Link href="/" className="font-bold text-tinta underline">Hoy</Link>}
       </div>
     </section>
   );
