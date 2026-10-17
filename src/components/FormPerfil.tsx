@@ -4,7 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import { guardarFoto, guardarPerfil } from "@/app/(app)/perfil/actions";
 import { createClient } from "@/lib/supabase/client";
-import { AVATARES_EMOJI, COLORES_AVATAR, INTERESES, MAX_INTERESES } from "@/lib/perfil";
+import { AVATARES_EMOJI, COLORES_AVATAR, GRUPOS_INTERESES, INTERESES, MAX_INTERESES } from "@/lib/perfil";
 
 type Props = {
   uid: string;
@@ -128,22 +128,54 @@ export default function FormPerfil(p: Props) {
         </div>
       </section>
 
-      <section className="tarjeta space-y-3">
-        <div>
-          <h2 className="text-lg font-extrabold">Tus gustos</h2>
-          <p className="text-sm text-apagado">Elige hasta {MAX_INTERESES}. Así los demás saben con quién tienen cosas en común. ({elegidos.length}/{MAX_INTERESES})</p>
+      <section className="space-y-3">
+        <div className="tarjeta space-y-3 !p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-extrabold">Tus gustos</h2>
+            <span className={`text-sm font-extrabold ${elegidos.length >= MAX_INTERESES ? "text-red-700" : "text-apagado"}`}>{elegidos.length}/{MAX_INTERESES}</span>
+          </div>
+          <p className="text-sm text-apagado">Elige hasta {MAX_INTERESES}. Así los demás saben con quién tienen cosas en común.</p>
+          {elegidos.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5" aria-label="Gustos elegidos">
+              {elegidos.map((v) => {
+                const i = INTERESES.find((x) => x.valor === v);
+                if (!i) return null;
+                return (
+                  <li key={v}>
+                    <button type="button" onClick={() => alternar(v)} aria-label={`Quitar ${i.etiqueta}`} className="inline-flex items-center gap-1 rounded-full bg-tinta px-3 py-1.5 text-xs font-bold text-white">
+                      <span aria-hidden>{i.emoji}</span> {i.etiqueta} <span aria-hidden className="ml-0.5 opacity-70">✕</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {INTERESES.map((i) => {
-            const activo = elegidos.includes(i.valor);
-            return (
-              <label key={i.valor} className={`cursor-pointer rounded-full border-2 border-transparent px-4 py-2 text-sm font-bold transition ${activo ? "bg-tinta text-white" : "border-2 border-tinta/10 bg-white hover:border-tinta/30"}`}>
-                <input type="checkbox" name="intereses" value={i.valor} checked={activo} onChange={() => alternar(i.valor)} className="sr-only" />
-                <span aria-hidden>{i.emoji}</span> {i.etiqueta}
-              </label>
-            );
-          })}
-        </div>
+
+        {GRUPOS_INTERESES.map((g, n) => {
+          const dentro = g.items.filter((i) => elegidos.includes(i.valor)).length;
+          return (
+            <details key={g.id} open={n === 0 || p.intereses.some((v) => g.items.some((i) => i.valor === v))} className="group overflow-hidden rounded-[1.75rem]" style={{ background: g.color }}>
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+                <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-xl">{g.emoji}</span>
+                <span className="flex-1 text-base font-extrabold">{g.titulo}</span>
+                {dentro > 0 && <span className="rounded-full bg-tinta px-2.5 py-0.5 text-xs font-bold text-white">{dentro}</span>}
+                <span aria-hidden className="text-lg font-bold transition group-open:rotate-180">⌄</span>
+              </summary>
+              <div className="flex flex-wrap gap-2 px-4 pb-5">
+                {g.items.map((i) => {
+                  const activo = elegidos.includes(i.valor);
+                  return (
+                    <label key={i.valor} className={`cursor-pointer rounded-full px-3.5 py-2 text-sm font-bold transition active:scale-95 ${activo ? "bg-tinta text-white" : "bg-white/80 hover:bg-white"}`}>
+                      <input type="checkbox" name="intereses" value={i.valor} checked={activo} onChange={() => alternar(i.valor)} className="sr-only" />
+                      <span aria-hidden>{i.emoji}</span> {i.etiqueta}
+                    </label>
+                  );
+                })}
+              </div>
+            </details>
+          );
+        })}
       </section>
 
       {estado?.error && <p role="alert" className="text-sm font-semibold text-red-700">{estado.error}</p>}

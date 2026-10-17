@@ -1,6 +1,6 @@
 import { etiquetaInteres } from "@/lib/perfil";
 
-/** Gustos como etiquetas. Los que coinciden con los del usuario que mira van resaltados. */
+/** Gustos como etiquetas, con el color de su cuadro. Los que coinciden con los del usuario que mira van en negro. */
 export default function ChipsIntereses({ intereses, comunes = [] }: { intereses: string[]; comunes?: string[] }) {
   if (!intereses.length) return null;
   return (
@@ -10,7 +10,11 @@ export default function ChipsIntereses({ intereses, comunes = [] }: { intereses:
         if (!i) return null;
         const comun = comunes.includes(v);
         return (
-          <li key={v} className={`rounded-full border-2 border-transparent px-3 py-0.5 text-xs font-bold ${comun ? "bg-tinta text-white" : "border-2 border-tinta/10 bg-white"}`}>
+          <li
+            key={v}
+            style={comun ? undefined : { background: i.color }}
+            className={`rounded-full px-3 py-1 text-xs font-bold ${comun ? "bg-tinta text-white" : ""}`}
+          >
             <span aria-hidden>{i.emoji}</span> {i.etiqueta}
           </li>
         );
