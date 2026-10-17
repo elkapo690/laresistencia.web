@@ -9,10 +9,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const [{ data: perfil }, { count }] = await Promise.all([
+  const [{ data: perfil }, { count }, { data: marca }] = await Promise.all([
     supabase.from("profiles").select(`${COLUMNAS_PERFIL}, rol`).eq("id", user.id).single(),
     supabase.from("notificaciones").select("id", { count: "exact", head: true }).eq("leida", false),
+    supabase.from("profiles").select("cambiar_clave").eq("id", user.id).maybeSingle(),
   ]);
+  if (marca?.cambiar_clave) redirect("/cambiar-clave");
 
   return (
     <div className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col lg:p-6">

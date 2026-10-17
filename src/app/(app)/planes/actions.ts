@@ -167,3 +167,13 @@ export async function eliminarPlan(datos: FormData) {
   revalidatePath("/");
   redirect("/");
 }
+
+/** Solo el propietario (lo exige la base de datos). */
+export async function quitarAsistente(datos: FormData) {
+  const planId = String(datos.get("plan_id") ?? "");
+  const usuarioId = String(datos.get("usuario_id") ?? "");
+  const supabase = await createClient();
+  await supabase.from("asistencias").delete().eq("plan_id", planId).eq("usuario_id", usuarioId);
+  revalidatePath(`/planes/${planId}`);
+  revalidatePath("/");
+}

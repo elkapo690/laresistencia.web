@@ -34,6 +34,7 @@ export default async function Perfil() {
       />
 
       <div className="flex flex-wrap gap-2 border-t-2 border-tinta/5 pt-5">
+        <Link href="/cambiar-clave" className="btn-claro">Cambiar mi clave</Link>
         {admin && <Link href="/admin" className="btn-claro">Administración</Link>}
         <form action={salir}><button className="btn-claro">Cerrar sesión</button></form>
       </div>

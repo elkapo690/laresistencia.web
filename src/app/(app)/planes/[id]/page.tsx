@@ -11,7 +11,7 @@ import { fechaLarga, hace, hora } from "@/lib/fechas";
 import { COLUMNAS_PERFIL, type PerfilMini } from "@/lib/perfil";
 import { colorCategoria, emojiCategoria, etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
 import { createClient } from "@/lib/supabase/server";
-import { borrarComentario, cambiarCancelacion } from "../actions";
+import { borrarComentario, cambiarCancelacion, quitarAsistente } from "../actions";
 
 type Asistente = { usuario_id: string; estado: string; invitados: string[]; profiles: PerfilMini | null };
 type Comentario = { id: string; texto: string; creado_en: string; usuario_id: string; profiles: PerfilMini | null };
@@ -151,14 +151,21 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         ) : (
           <ul className="space-y-2">
             {voy.map((a) => (
-              <li key={a.usuario_id}>
-                <Link href={`/miembros/${a.usuario_id}`} className="flex items-center gap-3 rounded-2xl p-1 transition hover:bg-white">
+              <li key={a.usuario_id} className="flex items-center gap-2">
+                <Link href={`/miembros/${a.usuario_id}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-1 transition hover:bg-white">
                   <Avatar perfil={a.profiles} tam={36} />
-                  <span>
+                  <span className="min-w-0">
                     <span className="font-bold">{a.profiles?.nombre}</span>
                     {a.invitados.length > 0 && <span className="text-apagado"> + {a.invitados.join(", ")}</span>}
                   </span>
                 </Link>
+                {esPropietario && (
+                  <form action={quitarAsistente}>
+                    <input type="hidden" name="plan_id" value={id} />
+                    <input type="hidden" name="usuario_id" value={a.usuario_id} />
+                    <button className="text-xs font-semibold text-apagado underline hover:text-red-700">Quitar</button>
+                  </form>
+                )}
               </li>
             ))}
           </ul>

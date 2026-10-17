@@ -1,12 +1,19 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import BotonEliminarMiembro from "@/components/BotonEliminarMiembro";
+import RestablecerClave from "@/components/RestablecerClave";
 import { hace } from "@/lib/fechas";
 import { createClient } from "@/lib/supabase/server";
 import { cambiarRol, desactivarCodigo, nuevoCodigo } from "./actions";
 
 const ETIQUETA: Record<string, string> = { propietario: "Propietario", admin: "Admin", miembro: "Miembro" };
 const ACCION: Record<string, string> = { creado: "✨ Creó", cancelado: "🚫 Canceló", reactivado: "♻️ Reactivó", eliminado: "🗑️ Eliminó" };
+const ACCION_CUENTA: Record<string, string> = {
+  clave_restablecida: "🔑 Restableció la clave de",
+  miembro_eliminado: "🗑️ Eliminó a",
+  rol_cambiado: "🛡️ Cambió el rol de",
+};
 
 export default async function Admin() {
   const supabase = await createClient();
@@ -17,10 +24,11 @@ export default async function Admin() {
   const esPropietario = yo?.rol === "propietario";
   if (!esPropietario && yo?.rol !== "admin") redirect("/");
 
-  const [{ data: activa }, { data: miembros }, { data: registro }] = await Promise.all([
+  const [{ data: activa }, { data: miembros }, { data: registro }, { data: cuentas }] = await Promise.all([
     supabase.from("invitaciones").select("codigo").eq("activa", true).limit(1).maybeSingle(),
     supabase.from("profiles").select("id, nombre, rol, avatar_url, avatar_emoji, avatar_color, creado_en").order("creado_en"),
     supabase.from("registro").select("id, plan_titulo, accion, usuario_nombre, creado_en").order("creado_en", { ascending: false }).limit(30),
+    supabase.from("registro_cuentas").select("id, accion, objetivo_nombre, detalle, usuario_nombre, creado_en").order("creado_en", { ascending: false }).limit(30),
   ]);
 
   const h = await headers();
@@ -62,36 +70,63 @@ export default async function Admin() {
           <h2 className="text-lg font-extrabold">Miembros ({miembros?.length ?? 0})</h2>
           <p className="text-sm text-apagado">
             {esPropietario
-              ? "Tú eres el propietario: puedes nombrar y quitar administradores."
-              : "Solo el propietario puede nombrar administradores."}
+              ? "Como propietario puedes nombrar admins, restablecer cualquier clave y eliminar miembros."
+              : "Puedes darle una clave temporal a un miembro que haya olvidado la suya."}
           </p>
         </div>
         <ul className="divide-y-2 divide-tinta/5">
-          {miembros?.map((m) => (
-            <li key={m.id} className="flex items-center gap-3 py-3">
-              <Avatar perfil={m} tam={40} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-bold">{m.nombre}</span>
-                <span className="text-xs font-semibold text-apagado">{ETIQUETA[m.rol] ?? m.rol}</span>
-              </span>
-              {esPropietario && m.rol !== "propietario" && (
-                <form action={cambiarRol}>
-                  <input type="hidden" name="usuario" value={m.id} />
-                  <input type="hidden" name="rol" value={m.rol === "admin" ? "miembro" : "admin"} />
-                  <button className={m.rol === "admin" ? "btn-claro !px-4 !py-2 text-xs" : "btn !px-4 !py-2 text-xs"}>
-                    {m.rol === "admin" ? "Quitar admin" : "Hacer admin"}
-                  </button>
-                </form>
-              )}
-              {m.rol === "propietario" && <span className="chip">👑</span>}
-            </li>
-          ))}
+          {miembros?.map((m) => {
+            const puedeClave = m.id !== user!.id && (esPropietario || m.rol === "miembro");
+            return (
+              <li key={m.id} className="flex flex-wrap items-center gap-3 py-3">
+                <Avatar perfil={m} tam={40} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-bold">{m.nombre}</span>
+                  <span className="text-xs font-semibold text-apagado">{ETIQUETA[m.rol] ?? m.rol}</span>
+                </span>
+                {m.rol === "propietario" && <span className="chip">👑</span>}
+                {esPropietario && m.rol !== "propietario" && (
+                  <form action={cambiarRol}>
+                    <input type="hidden" name="usuario" value={m.id} />
+                    <input type="hidden" name="rol" value={m.rol === "admin" ? "miembro" : "admin"} />
+                    <button className={m.rol === "admin" ? "btn-claro !px-4 !py-2 text-xs" : "btn !px-4 !py-2 text-xs"}>
+                      {m.rol === "admin" ? "Quitar admin" : "Hacer admin"}
+                    </button>
+                  </form>
+                )}
+                {esPropietario && m.rol !== "propietario" && <BotonEliminarMiembro usuario={m.id} nombre={m.nombre} />}
+                {puedeClave && <RestablecerClave usuario={m.id} nombre={m.nombre} />}
+              </li>
+            );
+          })}
         </ul>
       </section>
-    
+
       <section className="tarjeta space-y-3">
         <div>
-          <h2 className="text-lg font-extrabold">Registro de actividad</h2>
+          <h2 className="text-lg font-extrabold">Registro de cuentas</h2>
+          <p className="text-sm text-apagado">Cambios de rol, claves restablecidas y miembros eliminados.</p>
+        </div>
+        {!cuentas?.length ? (
+          <p className="text-sm text-apagado">Todavía no hay actividad.</p>
+        ) : (
+          <ul className="divide-y-2 divide-tinta/5 text-sm">
+            {cuentas.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-baseline gap-x-2 py-2">
+                <span className="font-bold">{r.usuario_nombre}</span>
+                <span>{ACCION_CUENTA[r.accion] ?? r.accion}</span>
+                <span className="font-bold">{r.objetivo_nombre}</span>
+                {r.accion === "rol_cambiado" && <span className="text-apagado">({r.detalle === "admin" ? "ahora es admin" : "ahora es miembro"})</span>}
+                <span className="ml-auto text-xs text-apagado">{hace(r.creado_en)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="tarjeta space-y-3">
+        <div>
+          <h2 className="text-lg font-extrabold">Registro de planes</h2>
           <p className="text-sm text-apagado">Qué se ha creado, cancelado o eliminado, y quién lo hizo.</p>
         </div>
         {!registro?.length ? (
