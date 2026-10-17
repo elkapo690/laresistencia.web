@@ -68,3 +68,14 @@ body {
     @apply inline-flex items-center rounded-full border-2 border-tinta/15 px-3 py-0.5 text-xs font-semibold;
   }
 }
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.aparecer {
+  animation: aparecer 0.45s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aparecer { animation: none; }
+}

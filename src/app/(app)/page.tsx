@@ -4,8 +4,10 @@ import Calendario, { mesDe } from "@/components/Calendario";
 import FiltroCategorias from "@/components/FiltroCategorias";
 import Maquina from "@/components/Maquina";
 import Miembros from "@/components/Miembros";
+import { IconoMas } from "@/components/Iconos";
 import Proximos from "@/components/Proximos";
 import ProximosMovil from "@/components/ProximosMovil";
+import SugerenciasPlan from "@/components/SugerenciasPlan";
 import TarjetaPlan from "@/components/TarjetaPlan";
 import { claveDia, claveDiaLarga, hoyClave } from "@/lib/fechas";
 import { CATEGORIAS, acentoCategoria, type Plan } from "@/lib/planes";
@@ -68,12 +70,17 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
 
         <Link
           href="/planes/nuevo"
-          className="flex items-center gap-3 rounded-full bg-white p-2 pl-2.5 shadow-[0_10px_30px_-14px_rgba(60,40,120,0.3)] transition hover:shadow-lg lg:bg-[#f6f6fa] lg:shadow-none lg:hover:bg-white"
+          aria-label="Proponer un plan nuevo"
+          className="group block rounded-full bg-gradient-to-r from-violet-300 via-pink-300 to-sky-300 p-[2px] shadow-[0_10px_30px_-14px_rgba(60,40,120,0.35)] transition hover:shadow-lg"
         >
-          <Avatar perfil={yoPerfil} tam={40} />
-          <span className="min-w-0 flex-1 text-sm font-semibold leading-tight text-apagado">¿Qué plan propones?</span>
-          <span className="btn hidden !py-2.5 sm:inline-flex">+ Nuevo plan</span>
-          <span aria-label="Nuevo plan" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tinta text-2xl font-bold leading-none text-white sm:hidden">+</span>
+          <span className="flex items-center gap-3 rounded-full bg-white p-2 pl-2.5">
+            <Avatar perfil={yoPerfil} tam={40} />
+            <SugerenciasPlan />
+            <span className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-tinta text-white transition group-hover:bg-[#262626] max-sm:w-11 sm:px-5">
+              <IconoMas />
+              <span className="hidden text-sm font-bold sm:inline">Nuevo plan</span>
+            </span>
+          </span>
         </Link>
 
         <ProximosMovil planes={(proximos ?? []) as Plan[]} />
