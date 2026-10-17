@@ -22,7 +22,7 @@ export default async function Admin() {
   const enlace = activa ? `${proto}://${host}/unirse?codigo=${activa.codigo}` : null;
 
   return (
-    <div className="space-y-6">
+    <div className="contenedor space-y-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Administración</h1>
 
       <section className="tarjeta space-y-3">

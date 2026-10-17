@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --fondo: #ffffff;
+  --fondo: #f2f2ef;
   --tinta: #0a0a0a;
   --suave: #f4f4f2;
   --apagado: #6b6b66;
@@ -46,7 +46,10 @@ body {
     @apply w-full rounded-2xl border-2 border-tinta/15 bg-white px-4 py-3 text-base outline-none transition placeholder:text-apagado/70 focus:border-tinta;
   }
   .tarjeta {
-    @apply rounded-3xl border-2 border-tinta bg-white p-5;
+    @apply rounded-[1.75rem] border border-tinta/5 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)];
+  }
+  .contenedor {
+    @apply mx-auto w-full max-w-2xl;
   }
   .etiqueta {
     @apply mb-1.5 block text-sm font-semibold;

@@ -1,14 +1,17 @@
 export const CATEGORIAS = [
-  { valor: "comida", etiqueta: "Comida y bebida" },
-  { valor: "fiesta", etiqueta: "Fiesta" },
-  { valor: "deporte", etiqueta: "Deporte" },
-  { valor: "viaje", etiqueta: "Viaje" },
-  { valor: "cultura", etiqueta: "Cultura y ocio" },
-  { valor: "otro", etiqueta: "Otro" },
+  { valor: "comida", etiqueta: "Comida y bebida", color: "#FFF0CC" },
+  { valor: "fiesta", etiqueta: "Fiesta", color: "#FFDCEB" },
+  { valor: "deporte", etiqueta: "Deporte", color: "#D7F2DF" },
+  { valor: "viaje", etiqueta: "Viaje", color: "#D8E7FF" },
+  { valor: "cultura", etiqueta: "Cultura y ocio", color: "#E8DEFF" },
+  { valor: "otro", etiqueta: "Otro", color: "#ECECE8" },
 ] as const;
 
 export const etiquetaCategoria = (v: string) =>
   CATEGORIAS.find((c) => c.valor === v)?.etiqueta ?? "Otro";
+
+export const colorCategoria = (v: string) =>
+  CATEGORIAS.find((c) => c.valor === v)?.color ?? "#ECECE8";
 
 export type Plan = {
   id: string;

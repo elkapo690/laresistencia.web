@@ -16,7 +16,7 @@ export default async function EditarPlan({ params }: PageProps<"/planes/[id]/edi
   if (plan.creador_id !== user?.id) redirect(`/planes/${id}`);
 
   return (
-    <div className="space-y-5">
+    <div className="contenedor space-y-5">
       <Link href={`/planes/${id}`} className="text-sm font-semibold underline">← Volver al plan</Link>
       <h1 className="text-3xl font-extrabold tracking-tight">Editar plan</h1>
       <div className="tarjeta">

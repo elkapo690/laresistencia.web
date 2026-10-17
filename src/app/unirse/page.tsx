@@ -6,7 +6,8 @@ export default async function Unirse({ searchParams }: PageProps<"/unirse">) {
   const c = typeof codigo === "string" ? codigo : "";
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-12">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
+      <div className="tarjeta !p-7 sm:!p-9">
       <Maquina texto="Bienvenido a la resistencia" className="mb-2 min-h-[2.6em] text-4xl font-extrabold leading-tight tracking-tight" />
       {c ? (
         <>
@@ -17,6 +18,7 @@ export default async function Unirse({ searchParams }: PageProps<"/unirse">) {
         <p className="text-apagado">Necesitas un enlace de invitación para unirte. Pídeselo a un administrador.</p>
       )}
       <p className="mt-8 text-sm"><a className="font-semibold underline" href="/login">Ya tengo cuenta</a></p>
+      </div>
     </main>
   );
 }

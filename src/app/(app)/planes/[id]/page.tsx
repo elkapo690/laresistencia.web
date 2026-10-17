@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import FormAsistencia from "@/components/FormAsistencia";
 import { fechaLarga, hora } from "@/lib/fechas";
-import { etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
+import { colorCategoria, etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
 import { createClient } from "@/lib/supabase/server";
 import { cambiarCancelacion } from "../actions";
 
@@ -32,32 +32,32 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
   const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(plan.lugar)}`;
 
   return (
-    <div className="space-y-5">
-      <Link href="/" className="text-sm font-semibold underline">← Volver a la agenda</Link>
+    <div className="contenedor space-y-5">
+      <Link href="/" className="inline-block text-sm font-bold underline">← Volver a la agenda</Link>
 
-      <article className="tarjeta space-y-4">
+      <article className="space-y-4 rounded-[1.75rem] p-5 sm:p-6" style={{ background: colorCategoria(plan.categoria) }}>
         <div className="flex flex-wrap gap-2">
-          <span className="chip">{etiquetaCategoria(plan.categoria)}</span>
+          <span className="rounded-full bg-white/70 px-3 py-0.5 text-xs font-bold">{etiquetaCategoria(plan.categoria)}</span>
           {plan.cancelado && <span className="chip !border-red-700 text-red-700">Cancelado</span>}
         </div>
         <h1 className={`text-3xl font-extrabold leading-tight tracking-tight ${plan.cancelado ? "line-through" : ""}`}>{plan.titulo}</h1>
 
         <dl className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl bg-suave p-3">
+          <div className="rounded-2xl bg-white p-3">
             <dt className="text-xs font-bold uppercase text-apagado">Cuándo</dt>
-            <dd className="font-semibold capitalize">{fechaLarga(plan.inicio)}</dd>
+            <dd className="font-semibold first-letter:uppercase">{fechaLarga(plan.inicio)}</dd>
             <dd className="text-sm">{hora(plan.inicio)} h</dd>
           </div>
-          <div className="rounded-2xl bg-suave p-3">
+          <div className="rounded-2xl bg-white p-3">
             <dt className="text-xs font-bold uppercase text-apagado">Dónde</dt>
             <dd className="font-semibold">{plan.lugar}</dd>
             <dd><a href={mapa} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold underline">Ver en el mapa ↗</a></dd>
           </div>
-          <div className="rounded-2xl bg-suave p-3">
+          <div className="rounded-2xl bg-white p-3">
             <dt className="text-xs font-bold uppercase text-apagado">Coste</dt>
             <dd className="font-semibold">{textoCoste(Number(plan.coste_por_persona))}</dd>
           </div>
-          <div className="rounded-2xl bg-suave p-3">
+          <div className="rounded-2xl bg-white p-3">
             <dt className="text-xs font-bold uppercase text-apagado">Plazas</dt>
             <dd className="font-semibold">{ocupadas} de {plan.aforo} ocupadas</dd>
           </div>

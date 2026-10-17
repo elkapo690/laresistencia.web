@@ -80,3 +80,13 @@ export function claveDiaLarga(clave: string) {
     month: "long",
   }).format(new Date(Date.UTC(y, m - 1, d)));
 }
+
+/** Abreviatura del día de la semana y número, p. ej. { dia: "sáb", num: "17" } */
+export function insignia(iso: string) {
+  const f = new Date(iso);
+  return {
+    dia: new Intl.DateTimeFormat("es-ES", { timeZone: TZ, weekday: "short" }).format(f).replace(".", ""),
+    num: new Intl.DateTimeFormat("es-ES", { timeZone: TZ, day: "numeric" }).format(f),
+    mes: new Intl.DateTimeFormat("es-ES", { timeZone: TZ, month: "short" }).format(f).replace(".", ""),
+  };
+}
