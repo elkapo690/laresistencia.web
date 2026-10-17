@@ -17,14 +17,14 @@ type Props = {
   avatarColor: string | null;
 };
 
-/** Recorta al cuadrado y reduce a 512 px para que la foto pese poco. */
+/** Recorta al cuadrado y reduce a 256 px (unos 15 KB) para que la web cargue rápido y gaste poco. */
 async function reducir(archivo: File): Promise<Blob> {
   const img = await createImageBitmap(archivo);
   const lado = Math.min(img.width, img.height);
   const lienzo = document.createElement("canvas");
-  lienzo.width = lienzo.height = 512;
-  lienzo.getContext("2d")!.drawImage(img, (img.width - lado) / 2, (img.height - lado) / 2, lado, lado, 0, 0, 512, 512);
-  return new Promise((ok, fallo) => lienzo.toBlob((b) => (b ? ok(b) : fallo(new Error("sin imagen"))), "image/jpeg", 0.85));
+  lienzo.width = lienzo.height = 256;
+  lienzo.getContext("2d")!.drawImage(img, (img.width - lado) / 2, (img.height - lado) / 2, lado, lado, 0, 0, 256, 256);
+  return new Promise((ok, fallo) => lienzo.toBlob((b) => (b ? ok(b) : fallo(new Error("sin imagen"))), "image/jpeg", 0.82));
 }
 
 export default function FormPerfil(p: Props) {
@@ -47,7 +47,7 @@ export default function FormPerfil(p: Props) {
       const blob = await reducir(archivo);
       const supabase = createClient();
       const ruta = `${p.uid}/avatar.jpg`;
-      const { error } = await supabase.storage.from("avatares").upload(ruta, blob, { upsert: true, contentType: "image/jpeg" });
+      const { error } = await supabase.storage.from("avatares").upload(ruta, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "31536000" });
       if (error) throw error;
       const url = `${supabase.storage.from("avatares").getPublicUrl(ruta).data.publicUrl}?v=${Date.now()}`;
       const r = await guardarFoto(url);
