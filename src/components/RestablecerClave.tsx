@@ -11,9 +11,9 @@ export default function RestablecerClave({ usuario, nombre }: { usuario: string;
     `Hola ${nombre.split(" ")[0]}, tu clave temporal de La Resistencia es: ${clave}\nEntra en ${window.location.origin}/login y te pedirá elegir una nueva.`;
 
   return (
-    <div className="basis-full">
+    <>
       {estado?.clave ? (
-        <div className="mt-2 space-y-3 rounded-2xl bg-[#FFF0CC] p-4">
+        <div className="w-full basis-full space-y-3 rounded-2xl bg-[#FFF0CC] p-4">
           <p className="text-sm font-bold">Clave temporal para {estado.nombre}:</p>
           <p className="select-all break-all text-center font-mono text-2xl font-extrabold tracking-wider">{estado.clave}</p>
           <p className="text-xs text-black/60">Solo se muestra ahora. Al entrar con ella, {estado.nombre?.split(" ")[0]} tendrá que elegir una clave nueva.</p>
@@ -48,9 +48,9 @@ export default function RestablecerClave({ usuario, nombre }: { usuario: string;
           <input type="hidden" name="usuario" value={usuario} />
           <input type="hidden" name="nombre" value={nombre} />
           <button className="btn-claro !px-4 !py-2 text-xs" disabled={pendiente}>{pendiente ? "Generando…" : "Nueva clave"}</button>
-          {estado?.error && <span role="alert" className="ml-2 text-xs font-semibold text-red-700">{estado.error}</span>}
+          {estado?.error && <span role="alert" className="mt-1 block text-xs font-semibold text-red-700">{estado.error}</span>}
         </form>
       )}
-    </div>
+    </>
   );
 }

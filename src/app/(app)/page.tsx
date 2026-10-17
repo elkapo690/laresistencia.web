@@ -71,8 +71,9 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
           className="flex items-center gap-3 rounded-full bg-white p-2 pl-2.5 shadow-[0_10px_30px_-14px_rgba(60,40,120,0.3)] transition hover:shadow-lg lg:bg-[#f6f6fa] lg:shadow-none lg:hover:bg-white"
         >
           <Avatar perfil={yoPerfil} tam={40} />
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-apagado">¿Qué plan propones?</span>
-          <span className="btn !py-2.5">+ Nuevo plan</span>
+          <span className="min-w-0 flex-1 text-sm font-semibold leading-tight text-apagado">¿Qué plan propones?</span>
+          <span className="btn hidden !py-2.5 sm:inline-flex">+ Nuevo plan</span>
+          <span aria-label="Nuevo plan" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tinta text-2xl font-bold leading-none text-white sm:hidden">+</span>
         </Link>
 
         <ProximosMovil planes={(proximos ?? []) as Plan[]} />

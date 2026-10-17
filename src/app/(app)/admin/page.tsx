@@ -74,28 +74,35 @@ export default async function Admin() {
               : "Puedes darle una clave temporal a un miembro que haya olvidado la suya."}
           </p>
         </div>
-        <ul className="divide-y-2 divide-tinta/5">
+        <ul className="space-y-3">
           {miembros?.map((m) => {
             const puedeClave = m.id !== user!.id && (esPropietario || m.rol === "miembro");
+            const hayAcciones = puedeClave || (esPropietario && m.rol !== "propietario");
             return (
-              <li key={m.id} className="flex flex-wrap items-center gap-3 py-3">
-                <Avatar perfil={m} tam={40} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-bold">{m.nombre}</span>
-                  <span className="text-xs font-semibold text-apagado">{ETIQUETA[m.rol] ?? m.rol}</span>
-                </span>
-                {m.rol === "propietario" && <span className="chip">👑</span>}
-                {esPropietario && m.rol !== "propietario" && (
-                  <form action={cambiarRol}>
-                    <input type="hidden" name="usuario" value={m.id} />
-                    <input type="hidden" name="rol" value={m.rol === "admin" ? "miembro" : "admin"} />
-                    <button className={m.rol === "admin" ? "btn-claro !px-4 !py-2 text-xs" : "btn !px-4 !py-2 text-xs"}>
-                      {m.rol === "admin" ? "Quitar admin" : "Hacer admin"}
-                    </button>
-                  </form>
+              <li key={m.id} className="rounded-3xl bg-suave p-4 lg:bg-white">
+                <div className="flex items-center gap-3">
+                  <Avatar perfil={m} tam={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words font-extrabold leading-tight">{m.nombre}</p>
+                    <p className="text-xs font-semibold text-apagado">{ETIQUETA[m.rol] ?? m.rol}</p>
+                  </div>
+                  {m.rol === "propietario" && <span className="chip">👑</span>}
+                </div>
+                {hayAcciones && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t-2 border-tinta/5 pt-3">
+                    {esPropietario && m.rol !== "propietario" && (
+                      <form action={cambiarRol}>
+                        <input type="hidden" name="usuario" value={m.id} />
+                        <input type="hidden" name="rol" value={m.rol === "admin" ? "miembro" : "admin"} />
+                        <button className={m.rol === "admin" ? "btn-claro !px-4 !py-2 text-xs" : "btn !px-4 !py-2 text-xs"}>
+                          {m.rol === "admin" ? "Quitar admin" : "Hacer admin"}
+                        </button>
+                      </form>
+                    )}
+                    {puedeClave && <RestablecerClave usuario={m.id} nombre={m.nombre} />}
+                    {esPropietario && m.rol !== "propietario" && <BotonEliminarMiembro usuario={m.id} nombre={m.nombre} />}
+                  </div>
                 )}
-                {esPropietario && m.rol !== "propietario" && <BotonEliminarMiembro usuario={m.id} nombre={m.nombre} />}
-                {puedeClave && <RestablecerClave usuario={m.id} nombre={m.nombre} />}
               </li>
             );
           })}
