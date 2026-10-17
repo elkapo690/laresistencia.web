@@ -8,7 +8,7 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
   const ocupadas = plazasOcupadas(plan);
   const lleno = ocupadas >= plan.aforo;
   const ins = insignia(plan.inicio);
-  const apuntados = (plan.asistencias ?? []).filter((a) => a.estado === "voy").map((a) => a.profiles?.nombre ?? "?");
+  const apuntados = (plan.asistencias ?? []).filter((a) => a.estado === "voy").map((a) => a.profiles ?? { nombre: "?" });
   const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-bold";
 
   return (
@@ -19,7 +19,7 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar nombre={plan.profiles?.nombre ?? "?"} tam={42} />
+          <Avatar perfil={plan.profiles} tam={42} />
           <div className="min-w-0">
             <p className="truncate text-sm font-extrabold">{plan.profiles?.nombre}</p>
             <p className="flex items-center gap-1.5 text-xs font-semibold text-black/55">
@@ -45,7 +45,7 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
 
       <div className="mt-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <PilaAvatares nombres={apuntados} total={ocupadas} />
+          <PilaAvatares perfiles={apuntados} total={ocupadas} />
           <span className="text-sm font-bold">{ocupadas}/{plan.aforo}</span>
         </div>
         <span className="btn !py-2.5">Ver plan →</span>

@@ -1,14 +1,15 @@
 import Avatar from "./Avatar";
+import type { PerfilMini } from "@/lib/perfil";
 
-export default function PilaAvatares({ nombres, total, tam = 30 }: { nombres: string[]; total: number; tam?: number }) {
-  const mostrados = nombres.slice(0, 4);
+export default function PilaAvatares({ perfiles, total, tam = 30 }: { perfiles: PerfilMini[]; total: number; tam?: number }) {
+  const mostrados = perfiles.slice(0, 4);
   const resto = total - mostrados.length;
   if (total === 0) return <span className="text-sm font-semibold text-black/55">Sé el primero</span>;
   return (
     <span className="flex items-center">
       <span className="flex -space-x-2">
-        {mostrados.map((n, i) => (
-          <Avatar key={i} nombre={n} tam={tam} />
+        {mostrados.map((p, i) => (
+          <Avatar key={i} perfil={p} tam={tam} />
         ))}
       </span>
       {resto > 0 && (

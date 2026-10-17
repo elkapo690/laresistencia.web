@@ -9,6 +9,7 @@ import ProximosMovil from "@/components/ProximosMovil";
 import TarjetaPlan from "@/components/TarjetaPlan";
 import { claveDia, claveDiaLarga, hoyClave } from "@/lib/fechas";
 import { CATEGORIAS, acentoCategoria, type Plan } from "@/lib/planes";
+import { COLUMNAS_PERFIL, primerNombre } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 
 const reMes = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -25,7 +26,7 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
   // Un día de margen a cada lado por la zona horaria.
   const desde = new Date(Date.UTC(y, m - 1, 1) - 864e5).toISOString();
   const hasta = new Date(Date.UTC(y, m, 1) + 864e5).toISOString();
-  const columnas = "*, profiles!creador_id(nombre), asistencias(estado, invitados, profiles(nombre))";
+  const columnas = `*, profiles!creador_id(${COLUMNAS_PERFIL}), asistencias(estado, invitados, profiles(${COLUMNAS_PERFIL}))`;
 
   const supabase = await createClient();
   const {
@@ -40,9 +41,10 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
       .eq("cancelado", false)
       .order("inicio")
       .limit(4),
-    supabase.from("profiles").select("id, nombre").order("creado_en").limit(60),
+    supabase.from("profiles").select(`id, ${COLUMNAS_PERFIL}`).order("creado_en").limit(60),
   ]);
-  const yo = miembros?.find((p) => p.id === user!.id)?.nombre ?? "";
+  const yoPerfil = miembros?.find((p) => p.id === user!.id);
+  const yo = yoPerfil?.nombre ?? "";
 
   const delMes = ((planes ?? []) as Plan[]).filter((p) => mesDe(claveDia(p.inicio)) === mes);
   const marcas: Record<string, string> = {};
@@ -61,14 +63,14 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
       <div className="min-w-0 space-y-6">
         <header>
           <Maquina texto="Bienvenido a la resistencia" className="min-h-[2.4em] text-4xl font-extrabold leading-[1.05] tracking-tight sm:min-h-0 lg:text-[2.6rem]" />
-          <p className="mt-2 text-base text-apagado">Hola, {yo.split(" ")[0]}. Mira qué se cuece.</p>
+          <p className="mt-2 text-base text-apagado">Hola, {primerNombre(yo)}. Mira qué se cuece.</p>
         </header>
 
         <Link
           href="/planes/nuevo"
           className="flex items-center gap-3 rounded-full bg-white p-2 pl-2.5 shadow-[0_10px_30px_-14px_rgba(60,40,120,0.3)] transition hover:shadow-lg lg:bg-[#f6f6fa] lg:shadow-none lg:hover:bg-white"
         >
-          <Avatar nombre={yo} tam={40} />
+          <Avatar perfil={yoPerfil} tam={40} />
           <span className="min-w-0 flex-1 truncate text-sm font-semibold text-apagado">¿Qué plan propones?</span>
           <span className="btn !py-2.5">+ Nuevo plan</span>
         </Link>

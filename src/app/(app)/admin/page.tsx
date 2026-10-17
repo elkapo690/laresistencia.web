@@ -1,10 +1,12 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import { hace } from "@/lib/fechas";
 import { createClient } from "@/lib/supabase/server";
 import { cambiarRol, desactivarCodigo, nuevoCodigo } from "./actions";
 
 const ETIQUETA: Record<string, string> = { propietario: "Propietario", admin: "Admin", miembro: "Miembro" };
+const ACCION: Record<string, string> = { creado: "✨ Creó", cancelado: "🚫 Canceló", reactivado: "♻️ Reactivó", eliminado: "🗑️ Eliminó" };
 
 export default async function Admin() {
   const supabase = await createClient();
@@ -15,9 +17,10 @@ export default async function Admin() {
   const esPropietario = yo?.rol === "propietario";
   if (!esPropietario && yo?.rol !== "admin") redirect("/");
 
-  const [{ data: activa }, { data: miembros }] = await Promise.all([
+  const [{ data: activa }, { data: miembros }, { data: registro }] = await Promise.all([
     supabase.from("invitaciones").select("codigo").eq("activa", true).limit(1).maybeSingle(),
-    supabase.from("profiles").select("id, nombre, rol, creado_en").order("creado_en"),
+    supabase.from("profiles").select("id, nombre, rol, avatar_url, avatar_emoji, avatar_color, creado_en").order("creado_en"),
+    supabase.from("registro").select("id, plan_titulo, accion, usuario_nombre, creado_en").order("creado_en", { ascending: false }).limit(30),
   ]);
 
   const h = await headers();
@@ -66,7 +69,7 @@ export default async function Admin() {
         <ul className="divide-y-2 divide-tinta/5">
           {miembros?.map((m) => (
             <li key={m.id} className="flex items-center gap-3 py-3">
-              <Avatar nombre={m.nombre} tam={40} />
+              <Avatar perfil={m} tam={40} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-bold">{m.nombre}</span>
                 <span className="text-xs font-semibold text-apagado">{ETIQUETA[m.rol] ?? m.rol}</span>
@@ -84,6 +87,27 @@ export default async function Admin() {
             </li>
           ))}
         </ul>
+      </section>
+    
+      <section className="tarjeta space-y-3">
+        <div>
+          <h2 className="text-lg font-extrabold">Registro de actividad</h2>
+          <p className="text-sm text-apagado">Qué se ha creado, cancelado o eliminado, y quién lo hizo.</p>
+        </div>
+        {!registro?.length ? (
+          <p className="text-sm text-apagado">Todavía no hay actividad.</p>
+        ) : (
+          <ul className="divide-y-2 divide-tinta/5 text-sm">
+            {registro.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-baseline gap-x-2 py-2">
+                <span className="font-bold">{ACCION[r.accion] ?? r.accion}</span>
+                <span className="min-w-0 truncate">«{r.plan_titulo}»</span>
+                <span className="text-apagado">por {r.usuario_nombre}</span>
+                <span className="ml-auto text-xs text-apagado">{hace(r.creado_en)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

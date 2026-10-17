@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { madridAISO } from "@/lib/fechas";
 import { CATEGORIAS } from "@/lib/planes";
+import { enviarPush } from "@/lib/push";
 import { createClient } from "@/lib/supabase/server";
 
 export type Estado = { error?: string; ok?: string } | undefined;
@@ -56,6 +58,7 @@ export async function crearPlan(_: Estado, datos: FormData): Promise<Estado> {
 
   // El creador se apunta automáticamente.
   await supabase.from("asistencias").insert({ plan_id: data.id, usuario_id: user.id, estado: "voy", invitados: [] });
+  after(() => enviarPush(supabase, data.id, "nuevo_plan"));
   revalidatePath("/");
   redirect(`/planes/${data.id}`);
 }
@@ -84,6 +87,7 @@ export async function cambiarCancelacion(datos: FormData) {
   const { error } = await supabase.rpc("cancelar_plan", { p_plan: id, p_cancelado: cancelado });
   // Respaldo por si la función aún no está en la base de datos: lo permite el creador.
   if (error) await supabase.from("planes").update({ cancelado }).eq("id", id);
+  if (cancelado) after(() => enviarPush(supabase, id, "plan_cancelado"));
   revalidatePath("/");
   revalidatePath(`/planes/${id}`);
 }
@@ -124,4 +128,42 @@ export async function apuntarse(_: Estado, datos: FormData): Promise<Estado> {
   revalidatePath(`/planes/${planId}`);
   revalidatePath("/");
   return { ok: "¡Guardado!" };
+}
+
+export async function comentar(_: Estado, datos: FormData): Promise<Estado> {
+  const planId = String(datos.get("plan_id") ?? "");
+  const texto = String(datos.get("texto") ?? "").trim();
+  if (!texto) return { error: "Escribe algo antes de enviar." };
+  if (texto.length > 1000) return { error: "El comentario es demasiado largo (máximo 1000 caracteres)." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("comentarios").insert({ plan_id: planId, usuario_id: user.id, texto });
+  if (error) return { error: "No se ha podido publicar el comentario." };
+
+  after(() => enviarPush(supabase, planId, "comentario"));
+  revalidatePath(`/planes/${planId}`);
+  return { ok: "Publicado" };
+}
+
+export async function borrarComentario(datos: FormData) {
+  const id = String(datos.get("id") ?? "");
+  const planId = String(datos.get("plan_id") ?? "");
+  const supabase = await createClient();
+  await supabase.from("comentarios").delete().eq("id", id);
+  revalidatePath(`/planes/${planId}`);
+}
+
+/** Solo propietario y admins (lo exige la base de datos). El registro de actividad lo anota un disparador. */
+export async function eliminarPlan(datos: FormData) {
+  const id = String(datos.get("id") ?? "");
+  const supabase = await createClient();
+  const { data } = await supabase.from("planes").delete().eq("id", id).select("id");
+  if (!data?.length) redirect(`/planes/${id}`);
+  revalidatePath("/");
+  redirect("/");
 }

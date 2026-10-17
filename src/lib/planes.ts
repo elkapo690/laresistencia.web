@@ -1,3 +1,5 @@
+import type { PerfilMini } from "./perfil";
+
 export const CATEGORIAS = [
   { valor: "comida", etiqueta: "Comida", emoji: "🍕", color: "#FFF0CC", acento: "#FFC83D" },
   { valor: "fiesta", etiqueta: "Fiesta", emoji: "🎉", color: "#FFDCEB", acento: "#FF6FA5" },
@@ -24,8 +26,8 @@ export type Plan = {
   aforo: number;
   coste_por_persona: number;
   cancelado: boolean;
-  profiles?: { nombre: string } | null;
-  asistencias?: { estado: string; invitados: string[]; profiles?: { nombre: string } | null }[];
+  profiles?: PerfilMini | null;
+  asistencias?: { estado: string; invitados: string[]; profiles?: PerfilMini | null }[];
 };
 
 export function plazasOcupadas(p: Pick<Plan, "asistencias">) {

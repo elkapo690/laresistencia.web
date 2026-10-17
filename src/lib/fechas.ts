@@ -90,3 +90,16 @@ export function insignia(iso: string) {
     mes: new Intl.DateTimeFormat("es-ES", { timeZone: TZ, month: "short" }).format(f).replace(".", ""),
   };
 }
+
+/** "hace 5 min", "hace 2 h", "hace 3 d" */
+export function hace(iso: string) {
+  const seg = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (seg < 60) return "ahora mismo";
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `hace ${d} ${d === 1 ? "día" : "días"}`;
+  return new Intl.DateTimeFormat("es-ES", { timeZone: TZ, day: "numeric", month: "short" }).format(new Date(iso));
+}
