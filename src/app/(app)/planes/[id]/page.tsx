@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import FormAsistencia from "@/components/FormAsistencia";
@@ -16,9 +17,10 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: plan }, { data: asist }] = await Promise.all([
+  const [{ data: plan }, { data: asist }, { data: yo }] = await Promise.all([
     supabase.from("planes").select("*, profiles!creador_id(nombre)").eq("id", id).single(),
     supabase.from("asistencias").select("usuario_id, estado, invitados, profiles(nombre)").eq("plan_id", id),
+    supabase.from("profiles").select("rol").eq("id", user!.id).single(),
   ]);
   if (!plan) notFound();
 
@@ -30,6 +32,26 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
   const misPlazas = mia?.estado === "voy" ? 1 + mia.invitados.length : 0;
   const libres = Math.max(plan.aforo - ocupadas + misPlazas, 0);
   const esCreador = plan.creador_id === user?.id;
+  const esPropietario = yo?.rol === "propietario";
+  const esAdmin = esPropietario || yo?.rol === "admin";
+  const puedeEditar = esCreador || esPropietario;
+  const puedeCancelar = esCreador || esAdmin;
+
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const fecha = fechaLarga(plan.inicio);
+  const mensaje = [
+    `${emojiCategoria(plan.categoria)} *${plan.titulo}*`,
+    `📅 ${fecha.charAt(0).toUpperCase()}${fecha.slice(1)} · ${hora(plan.inicio)} h`,
+    `📍 ${plan.lugar}`,
+    `💶 ${textoCoste(Number(plan.coste_por_persona))}`,
+    `👥 ${plan.aforo} plazas`,
+    "",
+    "Apúntate aquí 👇",
+    `${proto}://${host}/planes/${id}`,
+  ].join("\n");
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(plan.lugar)}`;
 
   return (
@@ -70,16 +92,20 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         {plan.descripcion && <p className="whitespace-pre-line">{plan.descripcion}</p>}
         <p className="text-sm text-apagado">Propuesto por <b className="text-tinta">{plan.profiles?.nombre}</b></p>
 
-        {esCreador && (
-          <div className="flex flex-wrap gap-2 border-t-2 border-tinta/10 pt-4">
-            <Link href={`/planes/${id}/editar`} className="btn-claro">Editar</Link>
+        <div className="flex flex-wrap gap-2 border-t-2 border-tinta/10 pt-4">
+          <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="btn !border-[#25D366] !bg-[#25D366] !text-tinta hover:!bg-[#1fbd5a]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-5.2A8.5 8.5 0 1 1 21 11.5Z" /></svg>
+            Compartir por WhatsApp
+          </a>
+          {puedeEditar && <Link href={`/planes/${id}/editar`} className="btn-claro">Editar</Link>}
+          {puedeCancelar && (
             <form action={cambiarCancelacion}>
               <input type="hidden" name="id" value={id} />
               <input type="hidden" name="cancelado" value={String(!plan.cancelado)} />
               <button className="btn-claro">{plan.cancelado ? "Reactivar plan" : "Cancelar plan"}</button>
             </form>
-          </div>
-        )}
+          )}
+        </div>
       </article>
 
       {!plan.cancelado && (

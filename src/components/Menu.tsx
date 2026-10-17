@@ -7,13 +7,14 @@ import InstalarApp from "./InstalarApp";
 import { IconoEscudo, IconoInicio, IconoMas, IconoSalir } from "./Iconos";
 import { salir } from "@/app/login/actions";
 
-type Props = { nombre: string; admin: boolean };
+type Props = { nombre: string; rol: string };
 
 function usaRuta(ruta: string, actual: string) {
   return ruta === "/" ? actual === "/" : actual.startsWith(ruta);
 }
 
-export default function Menu({ nombre, admin }: Props) {
+export default function Menu({ nombre, rol }: Props) {
+  const admin = rol === "admin" || rol === "propietario";
   const actual = usePathname();
   const items = [
     { href: "/", texto: "Inicio", Icono: IconoInicio },
@@ -31,7 +32,7 @@ export default function Menu({ nombre, admin }: Props) {
         <div className="mb-6 flex flex-col items-center text-center">
           <Avatar nombre={nombre} tam={72} anillo />
           <p className="mt-3 max-w-full truncate text-lg font-extrabold">{nombre}</p>
-          <p className="text-xs font-semibold text-apagado">{admin ? "Administrador" : "Miembro"}</p>
+          <p className="text-xs font-semibold text-apagado">{rol === "propietario" ? "Propietario" : rol === "admin" ? "Administrador" : "Miembro"}</p>
         </div>
         <nav className="flex flex-col gap-1.5" aria-label="Principal">
           {items.map(({ href, texto, Icono }) => {

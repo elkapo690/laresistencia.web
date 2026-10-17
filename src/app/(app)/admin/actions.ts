@@ -16,3 +16,12 @@ export async function desactivarCodigo() {
   await supabase.from("invitaciones").update({ activa: false }).eq("activa", true);
   revalidatePath("/admin");
 }
+
+/** Solo el propietario puede nombrar o quitar administradores (lo exige la base de datos). */
+export async function cambiarRol(datos: FormData) {
+  const usuario = String(datos.get("usuario") ?? "");
+  const rol = String(datos.get("rol") ?? "");
+  const supabase = await createClient();
+  await supabase.rpc("cambiar_rol", { p_usuario: usuario, p_rol: rol });
+  revalidatePath("/admin");
+}

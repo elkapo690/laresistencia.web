@@ -11,9 +11,12 @@ export default async function EditarPlan({ params }: PageProps<"/planes/[id]/edi
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: plan } = await supabase.from("planes").select("*").eq("id", id).single();
+  const [{ data: plan }, { data: yo }] = await Promise.all([
+    supabase.from("planes").select("*").eq("id", id).single(),
+    supabase.from("profiles").select("rol").eq("id", user!.id).single(),
+  ]);
   if (!plan) notFound();
-  if (plan.creador_id !== user?.id) redirect(`/planes/${id}`);
+  if (plan.creador_id !== user?.id && yo?.rol !== "propietario") redirect(`/planes/${id}`);
 
   return (
     <div className="contenedor space-y-5">

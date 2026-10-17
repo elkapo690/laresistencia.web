@@ -72,7 +72,7 @@ export async function editarPlan(_: Estado, datos: FormData): Promise<Estado> {
       return { error: "Ya hay más plazas ocupadas que ese aforo." };
     return { error: "No se ha podido guardar." };
   }
-  if (!data?.length) return { error: "Solo quien creó el plan puede editarlo." };
+  if (!data?.length) return { error: "Solo quien creó el plan (o el propietario) puede editarlo." };
   revalidatePath("/");
   redirect(`/planes/${id}`);
 }
@@ -81,7 +81,9 @@ export async function cambiarCancelacion(datos: FormData) {
   const id = String(datos.get("id") ?? "");
   const cancelado = datos.get("cancelado") === "true";
   const supabase = await createClient();
-  await supabase.from("planes").update({ cancelado }).eq("id", id);
+  const { error } = await supabase.rpc("cancelar_plan", { p_plan: id, p_cancelado: cancelado });
+  // Respaldo por si la función aún no está en la base de datos: lo permite el creador.
+  if (error) await supabase.from("planes").update({ cancelado }).eq("id", id);
   revalidatePath("/");
   revalidatePath(`/planes/${id}`);
 }

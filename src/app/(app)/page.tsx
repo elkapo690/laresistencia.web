@@ -5,6 +5,7 @@ import FiltroCategorias from "@/components/FiltroCategorias";
 import Maquina from "@/components/Maquina";
 import Miembros from "@/components/Miembros";
 import Proximos from "@/components/Proximos";
+import ProximosMovil from "@/components/ProximosMovil";
 import TarjetaPlan from "@/components/TarjetaPlan";
 import { claveDia, claveDiaLarga, hoyClave } from "@/lib/fechas";
 import { CATEGORIAS, acentoCategoria, type Plan } from "@/lib/planes";
@@ -71,6 +72,8 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
           <span className="min-w-0 flex-1 truncate text-sm font-semibold text-apagado">¿Qué plan propones?</span>
           <span className="btn !py-2.5">+ Nuevo plan</span>
         </Link>
+
+        <ProximosMovil planes={(proximos ?? []) as Plan[]} />
 
         <Miembros miembros={miembros ?? []} />
 
