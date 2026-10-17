@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { AVATARES_EMOJI, COLORES_AVATAR, INTERESES, MAX_INTERESES } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
+import { TEMAS } from "@/lib/temas";
 
 export type EstadoPerfil = { error?: string; ok?: string } | undefined;
 
@@ -76,6 +77,20 @@ export async function guardarAvatar(emoji: string, color: string): Promise<{ err
     })
     .eq("id", user.id);
   if (error) return { error: "No se ha podido guardar el avatar." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+/** Guarda el tema de colores de la persona. */
+export async function guardarTema(clave: string): Promise<{ error?: string }> {
+  if (!TEMAS.some((t) => t.clave === clave)) return { error: "Tema no válido." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sesión caducada." };
+  const { error } = await supabase.from("profiles").update({ tema: clave }).eq("id", user.id);
+  if (error) return { error: "No se ha podido guardar el tema." };
   revalidatePath("/", "layout");
   return {};
 }

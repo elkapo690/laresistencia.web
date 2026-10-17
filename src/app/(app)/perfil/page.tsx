@@ -1,5 +1,6 @@
 import Link from "next/link";
 import FormPerfil from "@/components/FormPerfil";
+import SelectorTema from "@/components/SelectorTema";
 import { salir } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,6 +14,7 @@ export default async function Perfil() {
     .select("nombre, edad, bio, intereses, avatar_url, avatar_emoji, avatar_color, rol")
     .eq("id", user!.id)
     .single();
+  const { data: aj } = await supabase.from("profiles").select("tema").eq("id", user!.id).maybeSingle();
   const admin = p?.rol === "admin" || p?.rol === "propietario";
 
   return (
@@ -21,6 +23,8 @@ export default async function Perfil() {
         <h1 className="text-4xl font-extrabold tracking-tight">Mi perfil</h1>
         <Link href={`/miembros/${user!.id}`} className="text-sm font-bold underline">Ver cómo me ven</Link>
       </div>
+
+      <SelectorTema actual={aj?.tema ?? "lila"} />
 
       <FormPerfil
         uid={user!.id}

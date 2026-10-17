@@ -76,7 +76,7 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
           <span className="flex items-center gap-3 rounded-full bg-white p-2 pl-2.5">
             <Avatar perfil={yoPerfil} tam={40} />
             <SugerenciasPlan />
-            <span className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-tinta text-white transition group-hover:bg-[#262626] max-sm:w-11 sm:px-5">
+            <span className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-tinta text-white transition group-hover:bg-[color-mix(in_srgb,var(--tinta),white_15%)] max-sm:w-11 sm:px-5">
               <IconoMas />
               <span className="hidden text-sm font-bold sm:inline">Nuevo plan</span>
             </span>

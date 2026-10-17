@@ -109,17 +109,10 @@ export default function FormPerfil(p: Props) {
             {avisoAvatar && <span role="status" className="text-xs font-bold text-apagado">{avisoAvatar}</span>}
           </div>
 
-          {foto && (
-            <div className="rounded-2xl bg-[#FFF0CC] p-3 text-sm">
-              <p className="font-semibold">📷 Ahora se muestra tu foto, no el avatar.</p>
-              <button type="button" onClick={quitarFoto} className="mt-1 font-bold underline">Quitar la foto y usar mi avatar</button>
-            </div>
-          )}
-
           <input type="hidden" name="avatar_emoji" value={emoji} />
           <input type="hidden" name="avatar_color" value={color} />
           <div>
-            <p className="etiqueta">Dibujo</p>
+            <p className="etiqueta">Dibujo del avatar (sin foto)</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" aria-pressed={emoji === ""} onClick={() => elegirAvatar("", color)} className={`h-11 rounded-full px-4 text-sm font-bold ${emoji === "" ? "bg-tinta text-white" : "bg-white"}`}>Mi inicial</button>
               {AVATARES_EMOJI.map((e) => (
@@ -128,7 +121,7 @@ export default function FormPerfil(p: Props) {
             </div>
           </div>
           <div>
-            <p className="etiqueta">Color de fondo</p>
+            <p className="etiqueta">Color de fondo del avatar (sin foto)</p>
             <div className="flex flex-wrap gap-2.5">
               {COLORES_AVATAR.map((c) => (
                 <button key={c} type="button" aria-label={`Color ${c}`} aria-pressed={color === c} onClick={() => elegirAvatar(emoji, color === c ? "" : c)} className={`h-10 w-10 rounded-full border-2 ${color === c ? "border-tinta ring-2 ring-tinta ring-offset-2" : "border-white"}`} style={{ background: c }} />

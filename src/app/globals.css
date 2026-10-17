@@ -6,6 +6,11 @@
   --suave: #f4f4f2;
   --apagado: #6b6b66;
   --borde: #0a0a0a;
+  --fondo-base: #ebe8f5;
+  --fondo-1: #d6cdff;
+  --fondo-2: #ffd3e4;
+  --fondo-3: #c6e2ff;
+  --fondo-4: #ffe6c7;
 }
 
 @theme inline {
@@ -21,12 +26,12 @@ html {
 }
 
 body {
-  background-color: #ebe8f5;
+  background-color: var(--fondo-base);
   background-image:
-    radial-gradient(55% 45% at 12% 8%, #d6cdff 0%, transparent 70%),
-    radial-gradient(45% 45% at 92% 15%, #ffd3e4 0%, transparent 70%),
-    radial-gradient(55% 55% at 75% 100%, #c6e2ff 0%, transparent 70%),
-    radial-gradient(40% 40% at 5% 95%, #ffe6c7 0%, transparent 70%);
+    radial-gradient(55% 45% at 12% 8%, var(--fondo-1) 0%, transparent 70%),
+    radial-gradient(45% 45% at 92% 15%, var(--fondo-2) 0%, transparent 70%),
+    radial-gradient(55% 55% at 75% 100%, var(--fondo-3) 0%, transparent 70%),
+    radial-gradient(40% 40% at 5% 95%, var(--fondo-4) 0%, transparent 70%);
   background-attachment: fixed;
   color: var(--tinta);
   font-family: var(--font-sans);
@@ -41,7 +46,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-tinta bg-tinta px-5 py-2.5 text-sm font-semibold text-white transition active:scale-[0.97] disabled:opacity-50;
   }
   .btn:hover {
-    background: #262626;
+    background: color-mix(in srgb, var(--tinta) 85%, white);
   }
   .btn-claro {
     @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-tinta bg-white px-5 py-2.5 text-sm font-semibold text-tinta transition active:scale-[0.97] disabled:opacity-50;
