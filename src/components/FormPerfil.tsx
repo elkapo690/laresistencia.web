@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import Avatar from "./Avatar";
-import { guardarFoto, guardarPerfil } from "@/app/(app)/perfil/actions";
+import { guardarAvatar, guardarFoto, guardarPerfil } from "@/app/(app)/perfil/actions";
 import { createClient } from "@/lib/supabase/client";
 import { AVATARES_EMOJI, COLORES_AVATAR, GRUPOS_INTERESES, INTERESES, MAX_INTERESES } from "@/lib/perfil";
 
@@ -35,6 +35,7 @@ export default function FormPerfil(p: Props) {
   const [elegidos, setElegidos] = useState<string[]>(p.intereses);
   const [subiendo, setSubiendo] = useState(false);
   const [errorFoto, setErrorFoto] = useState("");
+  const [avisoAvatar, setAvisoAvatar] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
   async function alElegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -67,13 +68,22 @@ export default function FormPerfil(p: Props) {
     setFoto(null);
   }
 
+  async function elegirAvatar(nuevoEmoji: string, nuevoColor: string) {
+    setEmoji(nuevoEmoji);
+    setColor(nuevoColor);
+    setAvisoAvatar("Guardando…");
+    const r = await guardarAvatar(nuevoEmoji, nuevoColor);
+    setAvisoAvatar(r.error ?? "Guardado ✓");
+  }
+
   const alternar = (v: string) =>
     setElegidos((a) => (a.includes(v) ? a.filter((x) => x !== v) : a.length >= MAX_INTERESES ? a : [...a, v]));
 
   return (
     <form action={enviar} className="space-y-6">
-      <section className="tarjeta space-y-4">
+      <section className="tarjeta space-y-5">
         <h2 className="text-lg font-extrabold">Tu foto o avatar</h2>
+
         <div className="flex flex-wrap items-center gap-4">
           <Avatar perfil={{ nombre: p.nombre, avatar_url: foto, avatar_emoji: emoji || null, avatar_color: color || null }} tam={96} anillo />
           <div className="space-y-2">
@@ -84,28 +94,46 @@ export default function FormPerfil(p: Props) {
               </button>
               {foto && <button type="button" className="btn-claro !py-2" onClick={quitarFoto}>Quitar foto</button>}
             </div>
-            <p className="text-xs text-apagado">La foto se guarda al momento. Sin foto, se usa el avatar de abajo.</p>
+            <p className="text-xs text-apagado">La foto se guarda al momento.</p>
             {errorFoto && <p role="alert" className="text-sm font-semibold text-red-700">{errorFoto}</p>}
           </div>
         </div>
 
-        <input type="hidden" name="avatar_emoji" value={emoji} />
-        <input type="hidden" name="avatar_color" value={color} />
-        <div>
-          <p className="etiqueta">Avatar</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setEmoji("")} className={`h-11 rounded-full px-4 text-sm font-bold ${emoji === "" ? "bg-tinta text-white" : "bg-white"}`}>Inicial</button>
-            {AVATARES_EMOJI.map((e) => (
-              <button key={e} type="button" aria-label={`Avatar ${e}`} aria-pressed={emoji === e} onClick={() => setEmoji(e)} className={`h-11 w-11 rounded-full text-xl ${emoji === e ? "bg-tinta" : "bg-white"}`}>{e}</button>
-            ))}
+        <div className="space-y-4 rounded-3xl bg-suave p-4 lg:bg-white">
+          <div className="flex items-center gap-3">
+            <Avatar perfil={{ nombre: p.nombre, avatar_emoji: emoji || null, avatar_color: color || null }} tam={64} />
+            <div className="min-w-0 flex-1">
+              <p className="font-extrabold leading-tight">Tu avatar</p>
+              <p className="text-xs text-apagado">Se usa cuando no hay foto. Se guarda al tocar.</p>
+            </div>
+            {avisoAvatar && <span role="status" className="text-xs font-bold text-apagado">{avisoAvatar}</span>}
           </div>
-        </div>
-        <div>
-          <p className="etiqueta">Color de fondo</p>
-          <div className="flex flex-wrap gap-2">
-            {COLORES_AVATAR.map((c) => (
-              <button key={c} type="button" aria-label={`Color ${c}`} aria-pressed={color === c} onClick={() => setColor(color === c ? "" : c)} className={`h-9 w-9 rounded-full border-2 ${color === c ? "border-tinta" : "border-white"}`} style={{ background: c }} />
-            ))}
+
+          {foto && (
+            <div className="rounded-2xl bg-[#FFF0CC] p-3 text-sm">
+              <p className="font-semibold">📷 Ahora se muestra tu foto, no el avatar.</p>
+              <button type="button" onClick={quitarFoto} className="mt-1 font-bold underline">Quitar la foto y usar mi avatar</button>
+            </div>
+          )}
+
+          <input type="hidden" name="avatar_emoji" value={emoji} />
+          <input type="hidden" name="avatar_color" value={color} />
+          <div>
+            <p className="etiqueta">Dibujo</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" aria-pressed={emoji === ""} onClick={() => elegirAvatar("", color)} className={`h-11 rounded-full px-4 text-sm font-bold ${emoji === "" ? "bg-tinta text-white" : "bg-white"}`}>Mi inicial</button>
+              {AVATARES_EMOJI.map((e) => (
+                <button key={e} type="button" aria-label={`Avatar ${e}`} aria-pressed={emoji === e} onClick={() => elegirAvatar(e, color)} className={`h-11 w-11 rounded-full text-xl ${emoji === e ? "bg-tinta ring-2 ring-tinta ring-offset-2" : "bg-white"}`}>{e}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="etiqueta">Color de fondo</p>
+            <div className="flex flex-wrap gap-2.5">
+              {COLORES_AVATAR.map((c) => (
+                <button key={c} type="button" aria-label={`Color ${c}`} aria-pressed={color === c} onClick={() => elegirAvatar(emoji, color === c ? "" : c)} className={`h-10 w-10 rounded-full border-2 ${color === c ? "border-tinta ring-2 ring-tinta ring-offset-2" : "border-white"}`} style={{ background: c }} />
+              ))}
+            </div>
           </div>
         </div>
       </section>

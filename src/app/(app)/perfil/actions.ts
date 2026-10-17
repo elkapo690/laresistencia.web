@@ -60,3 +60,22 @@ export async function guardarFoto(url: string | null): Promise<{ error?: string 
   revalidatePath("/", "layout");
   return {};
 }
+
+/** Guarda al momento el avatar (emoji y color) que se usa cuando no hay foto. */
+export async function guardarAvatar(emoji: string, color: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sesión caducada." };
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      avatar_emoji: AVATARES_EMOJI.includes(emoji) ? emoji : null,
+      avatar_color: COLORES_AVATAR.includes(color) ? color : null,
+    })
+    .eq("id", user.id);
+  if (error) return { error: "No se ha podido guardar el avatar." };
+  revalidatePath("/", "layout");
+  return {};
+}
