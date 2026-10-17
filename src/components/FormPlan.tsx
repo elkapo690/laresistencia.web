@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { CATEGORIAS } from "@/lib/planes";
 import type { Estado } from "@/app/(app)/planes/actions";
 
@@ -25,6 +25,16 @@ export default function FormPlan({
   textoBoton: string;
 }) {
   const [estado, enviar, pendiente] = useActionState(accion, undefined);
+  const [pago, setPago] = useState((valores.coste ?? 0) > 0);
+  const [importe, setImporte] = useState(valores.coste ? String(valores.coste).replace(".", ",") : "");
+  const campoImporte = useRef<HTMLInputElement>(null);
+
+  function elegirPago(deVerdad: boolean) {
+    setPago(deVerdad);
+    if (deVerdad) setTimeout(() => campoImporte.current?.focus(), 0);
+  }
+  const boton = (activo: boolean) =>
+    `rounded-full border-2 px-4 py-3 text-sm font-bold transition ${activo ? "border-tinta bg-tinta text-white" : "border-tinta/15 bg-white hover:border-tinta/40"}`;
   return (
     <form action={enviar} className="space-y-4">
       {valores.id && <input type="hidden" name="id" value={valores.id} />}
@@ -57,9 +67,43 @@ export default function FormPlan({
           <p className="mt-1 text-xs text-apagado">Cuentan los apuntados y sus invitados.</p>
         </div>
         <div>
-          <label className="etiqueta" htmlFor="coste">Coste por persona (€)</label>
-          <input id="coste" name="coste" type="number" inputMode="decimal" min={0} step="0.01" defaultValue={valores.coste ?? 0} className="campo" />
-          <p className="mt-1 text-xs text-apagado">Déjalo en 0 si es gratis.</p>
+          <p className="etiqueta" id="etiqueta-coste">Coste por persona</p>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="etiqueta-coste">
+            <button type="button" aria-pressed={!pago} onClick={() => elegirPago(false)} className={boton(!pago)}>Gratis</button>
+            <button type="button" aria-pressed={pago} onClick={() => elegirPago(true)} className={boton(pago)}>De pago</button>
+          </div>
+          {pago ? (
+            <div className="mt-2 space-y-2">
+              <div className="relative">
+                <input
+                  ref={campoImporte}
+                  id="coste"
+                  name="coste"
+                  type="text"
+                  inputMode="decimal"
+                  required
+                  autoComplete="off"
+                  value={importe}
+                  onChange={(e) => setImporte(e.target.value.replace(/[^0-9.,]/g, ""))}
+                  onFocus={(e) => e.target.select()}
+                  placeholder="Ej. 12,50"
+                  aria-label="Importe por persona en euros"
+                  className="campo pr-12"
+                />
+                <span aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-apagado">€</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[5, 10, 15, 20, 30].map((n) => (
+                  <button key={n} type="button" onClick={() => setImporte(String(n))} className="rounded-full border-2 border-tinta/15 bg-white px-3.5 py-1.5 text-sm font-bold transition hover:border-tinta/40 active:scale-95">
+                    {n} €
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <input type="hidden" name="coste" value="0" />
+          )}
+          <p className="mt-1 text-xs text-apagado">{pago ? "Lo que paga cada persona." : "No hay que pagar nada."}</p>
         </div>
       </div>
       <div>
