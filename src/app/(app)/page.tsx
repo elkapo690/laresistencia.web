@@ -24,7 +24,7 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
   // Un día de margen a cada lado por la zona horaria.
   const desde = new Date(Date.UTC(y, m - 1, 1) - 864e5).toISOString();
   const hasta = new Date(Date.UTC(y, m, 1) + 864e5).toISOString();
-  const columnas = "*, profiles(nombre), asistencias(estado, invitados, profiles(nombre))";
+  const columnas = "*, profiles!creador_id(nombre), asistencias(estado, invitados, profiles(nombre))";
 
   const supabase = await createClient();
   const {

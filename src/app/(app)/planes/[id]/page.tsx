@@ -17,7 +17,7 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
   } = await supabase.auth.getUser();
 
   const [{ data: plan }, { data: asist }] = await Promise.all([
-    supabase.from("planes").select("*, profiles(nombre)").eq("id", id).single(),
+    supabase.from("planes").select("*, profiles!creador_id(nombre)").eq("id", id).single(),
     supabase.from("asistencias").select("usuario_id, estado, invitados, profiles(nombre)").eq("plan_id", id),
   ]);
   if (!plan) notFound();
