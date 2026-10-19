@@ -103,3 +103,12 @@ export function hace(iso: string) {
   if (d < 30) return `hace ${d} ${d === 1 ? "día" : "días"}`;
   return new Intl.DateTimeFormat("es-ES", { timeZone: TZ, day: "numeric", month: "short" }).format(new Date(iso));
 }
+
+/** "caduca hoy", "caduca en 3 días" o "caducada" */
+export function caducaEn(iso: string | null) {
+  if (!iso) return "sin caducidad";
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "caducada";
+  const dias = Math.ceil(ms / 864e5);
+  return dias <= 1 ? "caduca hoy" : `caduca en ${dias} días`;
+}

@@ -4,17 +4,31 @@ import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export async function nuevoCodigo() {
+export type EstadoInvitacion = { codigo?: string; etiqueta?: string; error?: string } | undefined;
+
+/** Crea una invitación de un solo uso (caduca a los 7 días). Solo admins y propietario (lo exige la base de datos). */
+export async function crearInvitacion(_: EstadoInvitacion, datos: FormData): Promise<EstadoInvitacion> {
+  const etiqueta = String(datos.get("etiqueta") ?? "").trim().slice(0, 60);
   const supabase = await createClient();
-  // Las políticas RLS rechazan a cualquiera que no sea admin.
-  await supabase.from("invitaciones").update({ activa: false }).eq("activa", true);
-  await supabase.from("invitaciones").insert({});
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sesión caducada." };
+  const { data, error } = await supabase
+    .from("invitaciones")
+    .insert({ etiqueta, creado_por: user.id })
+    .select("codigo")
+    .single();
+  if (error || !data) return { error: "No se ha podido crear la invitación." };
   revalidatePath("/admin");
+  return { codigo: data.codigo, etiqueta };
 }
 
-export async function desactivarCodigo() {
+/** Anula una invitación que todavía no se ha usado. */
+export async function anularInvitacion(datos: FormData) {
+  const codigo = String(datos.get("codigo") ?? "");
   const supabase = await createClient();
-  await supabase.from("invitaciones").update({ activa: false }).eq("activa", true);
+  await supabase.from("invitaciones").update({ activa: false }).eq("codigo", codigo).is("usado_en", null);
   revalidatePath("/admin");
 }
 

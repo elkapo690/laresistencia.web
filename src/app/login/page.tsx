@@ -14,7 +14,7 @@ export default function Login() {
         <div className="p-8">
           <FormLogin />
           <p className="mt-6 text-sm text-apagado">
-            ¿Aún no tienes cuenta? Pide el enlace de invitación a un administrador.
+            ¿Aún no tienes cuenta? Solo se entra con invitación personal: pídesela a un administrador.
           </p>
         </div>
       </div>
