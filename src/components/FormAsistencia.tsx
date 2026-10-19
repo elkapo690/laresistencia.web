@@ -69,7 +69,7 @@ export default function FormAsistencia({
     {apuntado && (
       <form action={desapuntarse} className="text-center">
         <input type="hidden" name="plan_id" value={planId} />
-        <button className="text-sm font-bold text-apagado underline transition hover:text-red-700">Ya no voy · quitar mi apuntado</button>
+        <button aria-label="Ya no puedo ir: quitar mi apuntado" className="text-sm font-bold text-apagado underline transition hover:text-red-700">Ya no puedo ir 😢</button>
       </form>
     )}
     </div>
