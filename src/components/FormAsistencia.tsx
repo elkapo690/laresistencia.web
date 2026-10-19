@@ -1,12 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { apuntarse } from "@/app/(app)/planes/actions";
+import { apuntarse, desapuntarse } from "@/app/(app)/planes/actions";
 
 const OPCIONES = [
   { v: "voy", t: "Voy" },
   { v: "quizas", t: "Quizás" },
-  { v: "no", t: "No voy" },
 ];
 
 export default function FormAsistencia({
@@ -21,12 +20,15 @@ export default function FormAsistencia({
   plazasLibres: number;
 }) {
   const [estado, enviar, pendiente] = useActionState(apuntarse, undefined);
-  const [sel, setSel] = useState(estadoInicial ?? "voy");
+  // Los registros antiguos con "no voy" se tratan como no apuntado.
+  const apuntado = estadoInicial === "voy" || estadoInicial === "quizas";
+  const [sel, setSel] = useState(apuntado ? estadoInicial : "voy");
 
   return (
+    <div className="space-y-3">
     <form action={enviar} className="space-y-4">
       <input type="hidden" name="plan_id" value={planId} />
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tu respuesta">
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tu respuesta">
         {OPCIONES.map((o) => (
           <label
             key={o.v}
@@ -53,13 +55,23 @@ export default function FormAsistencia({
               className="campo"
             />
           ))}
-          <p className="text-xs text-apagado">Cada invitado ocupa una plaza. Quedan {plazasLibres} libres{estadoInicial === "voy" ? " (sin contar las tuyas)" : ""}.</p>
+          <p className="text-xs text-apagado">Cada invitado ocupa una plaza. Quedan {plazasLibres} libres{apuntado && estadoInicial === "voy" ? " (sin contar las tuyas)" : ""}.</p>
         </div>
       )}
 
       {estado?.error && <p role="alert" className="text-sm font-semibold text-red-700">{estado.error}</p>}
       {estado?.ok && <p role="status" className="text-sm font-semibold">{estado.ok}</p>}
-      <button className="btn w-full" disabled={pendiente}>{pendiente ? "Guardando…" : "Guardar respuesta"}</button>
+      <button className="btn w-full" disabled={pendiente}>
+        {pendiente ? "Guardando…" : apuntado ? "Guardar cambios" : sel === "voy" ? "Apuntarme" : "Apuntarme como «quizás»"}
+      </button>
     </form>
+
+    {apuntado && (
+      <form action={desapuntarse} className="text-center">
+        <input type="hidden" name="plan_id" value={planId} />
+        <button className="text-sm font-bold text-apagado underline transition hover:text-red-700">Ya no voy · quitar mi apuntado</button>
+      </form>
+    )}
+    </div>
   );
 }

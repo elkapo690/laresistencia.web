@@ -95,7 +95,7 @@ export async function cambiarCancelacion(datos: FormData) {
 export async function apuntarse(_: Estado, datos: FormData): Promise<Estado> {
   const planId = String(datos.get("plan_id") ?? "");
   const estado = String(datos.get("estado") ?? "");
-  if (!["voy", "quizas", "no"].includes(estado)) return { error: "Elige una opción." };
+  if (!["voy", "quizas"].includes(estado)) return { error: "Elige una opción." };
 
   const invitados =
     estado === "voy"
@@ -174,6 +174,19 @@ export async function quitarAsistente(datos: FormData) {
   const usuarioId = String(datos.get("usuario_id") ?? "");
   const supabase = await createClient();
   await supabase.from("asistencias").delete().eq("plan_id", planId).eq("usuario_id", usuarioId);
+  revalidatePath(`/planes/${planId}`);
+  revalidatePath("/");
+}
+
+/** Quitar mi apuntado: se borra mi fila, así que dejo de contar plazas y de salir en la lista. */
+export async function desapuntarse(datos: FormData) {
+  const planId = String(datos.get("plan_id") ?? "");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  await supabase.from("asistencias").delete().eq("plan_id", planId).eq("usuario_id", user.id);
   revalidatePath(`/planes/${planId}`);
   revalidatePath("/");
 }

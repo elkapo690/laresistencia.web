@@ -137,7 +137,7 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
           <FormAsistencia
             key={`${mia?.estado}-${mia?.invitados.join("|")}`}
             planId={id}
-            estadoInicial={mia?.estado}
+            estadoInicial={mia && mia.estado !== "no" ? mia.estado : undefined}
             invitadosIniciales={mia?.invitados ?? []}
             plazasLibres={libres}
           />
