@@ -6,6 +6,7 @@ import type { Estado } from "@/app/(app)/planes/actions";
 
 type Valores = {
   id?: string;
+  repiteDe?: string;
   titulo?: string;
   descripcion?: string;
   categoria?: string;
@@ -39,6 +40,7 @@ export default function FormPlan({
   return (
     <form action={enviar} className="space-y-4">
       {valores.id && <input type="hidden" name="id" value={valores.id} />}
+      {valores.repiteDe && <input type="hidden" name="repite_de" value={valores.repiteDe} />}
       <div>
         <label className="etiqueta" htmlFor="titulo">¿Qué plan es?</label>
         <input id="titulo" name="titulo" required maxLength={120} defaultValue={valores.titulo} className="campo" placeholder="Barbacoa en casa de Pepe" />

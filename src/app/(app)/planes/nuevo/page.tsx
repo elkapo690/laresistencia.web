@@ -37,6 +37,7 @@ export default async function NuevoPlan({ searchParams }: PageProps<"/planes/nue
           valores={
             base
               ? {
+                  repiteDe: desde as string,
                   titulo: base.titulo,
                   descripcion: base.descripcion,
                   categoria: base.categoria,

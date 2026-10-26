@@ -49,9 +49,17 @@ export async function crearPlan(_: Estado, datos: FormData): Promise<Estado> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // "Repetir plan": se guarda de cuál viene (solo si ese plan existe).
+  let repiteDe: string | null = null;
+  const origen = String(datos.get("repite_de") ?? "");
+  if (/^[0-9a-f-]{36}$/i.test(origen)) {
+    const { data: previo } = await supabase.from("planes").select("id").eq("id", origen).maybeSingle();
+    if (previo) repiteDe = previo.id;
+  }
+
   const { data, error } = await supabase
     .from("planes")
-    .insert({ ...r.valores, creador_id: user.id })
+    .insert({ ...r.valores, creador_id: user.id, repite_de: repiteDe })
     .select("id")
     .single();
   if (error || !data) return { error: "No se ha podido crear el plan." };

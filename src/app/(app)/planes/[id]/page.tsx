@@ -31,6 +31,14 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
   ]);
   if (!plan) notFound();
 
+  // Plan del que viene (si es una repetición) y repeticiones de este plan.
+  const [{ data: origen }, { data: repeticiones }] = await Promise.all([
+    plan.repite_de
+      ? supabase.from("planes").select("id, titulo, inicio").eq("id", plan.repite_de).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase.from("planes").select("id, titulo, inicio").eq("repite_de", id).order("inicio").limit(8),
+  ]);
+
   const asistentes = (asist ?? []) as unknown as Asistente[];
   const comentarios = (coments ?? []) as unknown as Comentario[];
   const voy = asistentes.filter((a) => a.estado === "voy");
@@ -103,6 +111,29 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         </dl>
 
         {plan.descripcion && <p className="whitespace-pre-line">{plan.descripcion}</p>}
+
+        {(origen || (repeticiones && repeticiones.length > 0)) && (
+          <div className="space-y-1.5 rounded-2xl bg-white/70 p-3 text-sm">
+            {origen && (
+              <p>
+                🔁 Repetición de{" "}
+                <Link href={`/planes/${origen.id}`} className="font-bold underline">«{origen.titulo}»</Link>{" "}
+                <span className="text-apagado">({fechaLarga(origen.inicio)})</span>
+              </p>
+            )}
+            {repeticiones && repeticiones.length > 0 && (
+              <p>
+                🔁 Se ha repetido:{" "}
+                {repeticiones.map((r, i) => (
+                  <span key={r.id}>
+                    {i > 0 && ", "}
+                    <Link href={`/planes/${r.id}`} className="font-bold underline">{fechaLarga(r.inicio)}</Link>
+                  </span>
+                ))}
+              </p>
+            )}
+          </div>
+        )}
         <p className="flex items-center gap-2 text-sm text-apagado">
           <Avatar perfil={plan.profiles} tam={26} /> Propuesto por <b className="text-tinta">{plan.profiles?.nombre}</b>
         </p>
