@@ -83,10 +83,11 @@ export default function Calendario({
         })}
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-xs text-apagado">
-        <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded-full bg-[#FF6FA5]" /> Día con plan · apagado = ya pasó</span>
-        {mes !== mesDe(hoy) && <Link href="/" className="font-bold text-tinta underline">Hoy</Link>}
-      </div>
+      {mes !== mesDe(hoy) && (
+        <div className="mt-4 text-center">
+          <Link href="/" className="text-sm font-bold underline">Volver a hoy</Link>
+        </div>
+      )}
     </section>
   );
 }
