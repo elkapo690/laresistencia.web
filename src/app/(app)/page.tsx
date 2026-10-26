@@ -9,8 +9,8 @@ import Proximos from "@/components/Proximos";
 import ProximosMovil from "@/components/ProximosMovil";
 import SugerenciasPlan from "@/components/SugerenciasPlan";
 import TarjetaPlan from "@/components/TarjetaPlan";
-import { claveDia, claveDiaLarga, hoyClave } from "@/lib/fechas";
-import { CATEGORIAS, acentoCategoria, type Plan } from "@/lib/planes";
+import { claveDia, claveDiaLarga, hoyClave, inicioDeHoy } from "@/lib/fechas";
+import { CATEGORIAS, acentoCategoria, ruta, type Plan } from "@/lib/planes";
 import { COLUMNAS_PERFIL, primerNombre } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,6 +23,12 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
   const dia = typeof sp.dia === "string" && reDia.test(sp.dia) ? sp.dia : undefined;
   const mes = typeof sp.mes === "string" && reMes.test(sp.mes) ? sp.mes : (dia ? mesDe(dia) : mesDe(hoy));
   const cat = typeof sp.cat === "string" && CATEGORIAS.some((c) => c.valor === sp.cat) ? sp.cat : undefined;
+  const pasados = sp.v === "pasados";
+  // Se quitan los caracteres que tienen significado especial en el filtro de la base de datos.
+  const q = typeof sp.q === "string" ? sp.q.replace(/[,()"\\%*]/g, " ").trim().slice(0, 60) : "";
+  const n = Math.min(Math.max(Number(sp.n) || 20, 20), 200);
+  const mesExplicito = !dia && !pasados && typeof sp.mes === "string" && reMes.test(sp.mes) && sp.mes !== mesDe(hoy);
+  const hoyInicio = inicioDeHoy();
 
   const [y, m] = mes.split("-").map(Number);
   // Un día de margen a cada lado por la zona horaria.
@@ -34,16 +40,22 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: planes }, { data: proximos }, { data: miembros }] = await Promise.all([
+  let listaConsulta = supabase.from("planes").select(columnas);
+  listaConsulta = pasados ? listaConsulta.lt("inicio", hoyInicio) : listaConsulta.gte("inicio", hoyInicio);
+  if (cat) listaConsulta = listaConsulta.eq("categoria", cat);
+  if (pasados && q) listaConsulta = listaConsulta.or(`titulo.ilike.%${q}%,lugar.ilike.%${q}%`);
+
+  const [{ data: planes }, { data: proximos }, { data: miembros }, { data: lista }] = await Promise.all([
     supabase.from("planes").select(columnas).gte("inicio", desde).lt("inicio", hasta).order("inicio"),
     supabase
       .from("planes")
       .select(columnas)
-      .gte("inicio", new Date().toISOString())
+      .gte("inicio", hoyInicio)
       .eq("cancelado", false)
       .order("inicio")
       .limit(4),
     supabase.from("profiles").select(`id, ${COLUMNAS_PERFIL}`).order("creado_en").limit(60),
+    listaConsulta.order("inicio", { ascending: !pasados }).limit(n + 1),
   ]);
   const yoPerfil = miembros?.find((p) => p.id === user!.id);
   const yo = yoPerfil?.nombre ?? "";
@@ -56,9 +68,19 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
     if (marcas[k]) varios.add(k);
     else marcas[k] = acentoCategoria(p.categoria);
   }
-  const visibles = delMes.filter((p) => (!dia || claveDia(p.inicio) === dia) && (!cat || p.categoria === cat));
+  const delDia = delMes.filter((p) => claveDia(p.inicio) === dia && (!cat || p.categoria === cat));
+  const delMesFiltrado = delMes.filter((p) => !cat || p.categoria === cat);
+  const completa = (lista ?? []) as Plan[];
+  const hayMas = completa.length > n;
+  const visibles = dia ? delDia : mesExplicito ? delMesFiltrado : completa.slice(0, n);
+  const modoLista = dia ? "dia" : mesExplicito ? "mes" : pasados ? "pasados" : "proximos";
+  const tituloMes = new Intl.DateTimeFormat("es-ES", { timeZone: "UTC", month: "long", year: "numeric" })
+    .format(new Date(Date.UTC(y, m - 1, 1)))
+    .replace(" de ", " ");
 
   const calendario = <Calendario mes={mes} marcas={marcas} varios={varios} hoy={hoy} seleccionado={dia} cat={cat} />;
+  const pestana = (activa: boolean) =>
+    `rounded-full px-5 py-2 text-sm font-extrabold transition ${activa ? "bg-tinta text-white" : "text-apagado hover:text-tinta"}`;
 
   return (
     <div className="mx-auto grid max-w-2xl gap-6 lg:max-w-none lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-8">
@@ -90,23 +112,53 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
         <div className="lg:hidden">{calendario}</div>
 
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-2xl font-extrabold tracking-tight first-letter:uppercase">
-              {dia ? claveDiaLarga(dia) : "Planes del mes"}
-            </h2>
-            {dia && (
-              <Link href={`/?mes=${mes}${cat ? `&cat=${cat}` : ""}`} className="text-sm font-bold underline">Ver todo el mes</Link>
-            )}
-          </div>
-          <FiltroCategorias mes={mes} dia={dia} cat={cat} />
+          {modoLista === "dia" || modoLista === "mes" ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-2xl font-extrabold tracking-tight first-letter:uppercase">
+                {modoLista === "dia" ? claveDiaLarga(dia!) : `Planes de ${tituloMes}`}
+              </h2>
+              <Link href={ruta({ cat })} className="text-sm font-bold underline">Volver a próximos</Link>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex rounded-full bg-white p-1 shadow-sm lg:bg-[#f6f6fa] lg:shadow-none" role="tablist" aria-label="Qué planes ver">
+                <Link role="tab" aria-selected={!pasados} href={ruta({ cat })} className={pestana(!pasados)}>Próximos</Link>
+                <Link role="tab" aria-selected={pasados} href={ruta({ cat, v: "pasados" })} className={pestana(pasados)}>Pasados</Link>
+              </div>
+            </div>
+          )}
+
+          {modoLista === "pasados" && (
+            <form action="/" className="relative">
+              <input type="hidden" name="v" value="pasados" />
+              {cat && <input type="hidden" name="cat" value={cat} />}
+              <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg">🔍</span>
+              <input name="q" defaultValue={q} maxLength={60} placeholder="Buscar por título o lugar…" aria-label="Buscar planes pasados" className="campo pl-11" />
+            </form>
+          )}
+
+          <FiltroCategorias mes={modoLista === "mes" || modoLista === "dia" ? mes : undefined} dia={dia} cat={cat} v={pasados ? "pasados" : undefined} q={q || undefined} />
+
           {visibles.length === 0 ? (
             <div className="rounded-[2rem] border-2 border-dashed border-tinta/20 p-10 text-center text-apagado">
-              <p className="mb-1 text-3xl" aria-hidden>🌱</p>
-              {dia ? "Día libre. ¿Y si propones algo?" : "Aquí aún no hay planes."}
+              <p className="mb-1 text-3xl" aria-hidden>{modoLista === "pasados" ? "🕰️" : "🌱"}</p>
+              {modoLista === "dia"
+                ? "Día libre. ¿Y si propones algo?"
+                : modoLista === "pasados"
+                  ? q || cat ? "Ningún plan pasado coincide con tu búsqueda." : "Todavía no hay planes pasados."
+                  : modoLista === "mes"
+                    ? "Este mes no hay planes."
+                    : "No hay planes próximos. ¡Propón el primero!"}
             </div>
           ) : (
             <div className="space-y-4">
               {visibles.map((p) => <TarjetaPlan key={p.id} plan={p} />)}
+            </div>
+          )}
+
+          {(modoLista === "pasados" || modoLista === "proximos") && hayMas && (
+            <div className="text-center">
+              <Link href={ruta({ cat, v: pasados ? "pasados" : undefined, q: q || undefined, n: n + 20 })} className="btn-claro">Ver más</Link>
             </div>
           )}
         </section>

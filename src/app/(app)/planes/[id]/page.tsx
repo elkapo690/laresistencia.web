@@ -7,7 +7,7 @@ import FormAsistencia from "@/components/FormAsistencia";
 import FormComentario from "@/components/FormComentario";
 import { IconoCalendario } from "@/components/Iconos";
 import { enlaceGoogle } from "@/lib/calendario";
-import { fechaLarga, hace, hora } from "@/lib/fechas";
+import { esPasado, fechaLarga, hace, hora } from "@/lib/fechas";
 import { COLUMNAS_PERFIL, type PerfilMini } from "@/lib/perfil";
 import { colorCategoria, emojiCategoria, etiquetaCategoria, plazasOcupadas, textoCoste } from "@/lib/planes";
 import { createClient } from "@/lib/supabase/server";
@@ -44,6 +44,8 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
   const esAdmin = esPropietario || yo?.rol === "admin";
   const puedeEditar = esCreador || esPropietario;
   const puedeCancelar = esCreador || esAdmin;
+  const pasado = esPasado(plan.inicio);
+  const puedeRepetir = esCreador || esAdmin;
   const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(plan.lugar)}`;
 
   const h = await headers();
@@ -72,6 +74,7 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-white/70 px-3 py-0.5 text-xs font-bold">{etiquetaCategoria(plan.categoria)}</span>
           {plan.cancelado && <span className="rounded-full bg-red-700 px-3 py-0.5 text-xs font-bold text-white">Cancelado</span>}
+          {pasado && !plan.cancelado && <span className="rounded-full bg-black/60 px-3 py-0.5 text-xs font-bold text-white">Pasado</span>}
         </div>
         <div className="flex items-start justify-between gap-4">
           <h1 className={`text-4xl font-extrabold leading-[1.05] tracking-tight ${plan.cancelado ? "line-through" : ""}`}>{plan.titulo}</h1>
@@ -110,7 +113,7 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-5.2A8.5 8.5 0 1 1 21 11.5Z" /></svg>
               Compartir por WhatsApp
             </a>
-            {!plan.cancelado && (
+            {!plan.cancelado && !pasado && (
               <>
                 <a href={google} target="_blank" rel="noopener noreferrer" className="btn-claro"><IconoCalendario /> Google Calendar</a>
                 <a href={`/planes/${id}/calendario`} className="btn-claro"><IconoCalendario /> iPhone / otros</a>
@@ -119,7 +122,10 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
           </div>
           <div className="flex flex-wrap gap-2">
             {puedeEditar && <Link href={`/planes/${id}/editar`} className="btn-claro">Editar</Link>}
-            {puedeCancelar && (
+            {puedeRepetir && (pasado || plan.cancelado) && (
+              <Link href={`/planes/nuevo?desde=${id}`} className="btn">🔁 Repetir plan</Link>
+            )}
+            {puedeCancelar && !pasado && (
               <form action={cambiarCancelacion}>
                 <input type="hidden" name="id" value={id} />
                 <input type="hidden" name="cancelado" value={String(!plan.cancelado)} />
@@ -131,7 +137,15 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
         </div>
       </article>
 
-      {!plan.cancelado && (
+      {pasado && !plan.cancelado && (
+        <section className="tarjeta space-y-1 text-center">
+          <p className="text-3xl" aria-hidden>🕰️</p>
+          <h2 className="text-lg font-extrabold">Este plan ya pasó</h2>
+          <p className="text-sm text-apagado">Ya no se puede apuntar nadie. {puedeRepetir ? "Si queréis repetirlo, pulsa «Repetir plan» y elige una fecha nueva." : "Si te gustaría repetirlo, díselo a quien lo propuso en los comentarios."}</p>
+        </section>
+      )}
+
+      {!plan.cancelado && !pasado && (
         <section className="tarjeta space-y-3">
           <h2 className="text-lg font-extrabold">¿Te apuntas?</h2>
           <FormAsistencia
@@ -145,9 +159,9 @@ export default async function DetallePlan({ params }: PageProps<"/planes/[id]">)
       )}
 
       <section className="tarjeta space-y-3">
-        <h2 className="text-lg font-extrabold">Apuntados ({ocupadas})</h2>
+        <h2 className="text-lg font-extrabold">{pasado ? `Fueron (${ocupadas})` : `Apuntados (${ocupadas})`}</h2>
         {voy.length === 0 ? (
-          <p className="text-apagado">Nadie todavía. ¡Sé el primero!</p>
+          <p className="text-apagado">{pasado ? "Nadie se apuntó a este plan." : "Nadie todavía. ¡Sé el primero!"}</p>
         ) : (
           <ul className="space-y-2">
             {voy.map((a) => (

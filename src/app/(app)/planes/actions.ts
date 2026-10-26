@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { madridAISO } from "@/lib/fechas";
+import { esPasado, madridAISO } from "@/lib/fechas";
 import { CATEGORIAS } from "@/lib/planes";
 import { enviarPush } from "@/lib/push";
 import { createClient } from "@/lib/supabase/server";
@@ -110,9 +110,10 @@ export async function apuntarse(_: Estado, datos: FormData): Promise<Estado> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: plan } = await supabase.from("planes").select("cancelado").eq("id", planId).single();
+  const { data: plan } = await supabase.from("planes").select("cancelado, inicio").eq("id", planId).single();
   if (!plan) return { error: "El plan no existe." };
   if (plan.cancelado) return { error: "Este plan está cancelado." };
+  if (esPasado(plan.inicio)) return { error: "Este plan ya ha pasado." };
 
   const { error } = await supabase
     .from("asistencias")
@@ -186,6 +187,9 @@ export async function desapuntarse(datos: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // El histórico no se toca: quien fue a un plan pasado sigue constando como asistente.
+  const { data: plan } = await supabase.from("planes").select("inicio").eq("id", planId).single();
+  if (!plan || esPasado(plan.inicio)) return;
   await supabase.from("asistencias").delete().eq("plan_id", planId).eq("usuario_id", user.id);
   revalidatePath(`/planes/${planId}`);
   revalidatePath("/");

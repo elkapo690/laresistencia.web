@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Avatar from "./Avatar";
 import PilaAvatares from "./PilaAvatares";
-import { hora, insignia } from "@/lib/fechas";
+import { esPasado, hora, insignia } from "@/lib/fechas";
 import { colorCategoria, emojiCategoria, etiquetaCategoria, plazasOcupadas, textoCoste, type Plan } from "@/lib/planes";
 
 export default function TarjetaPlan({ plan }: { plan: Plan }) {
   const ocupadas = plazasOcupadas(plan);
-  const lleno = ocupadas >= plan.aforo;
+  const pasado = esPasado(plan.inicio);
+  const lleno = !pasado && ocupadas >= plan.aforo;
   const ins = insignia(plan.inicio);
   const apuntados = (plan.asistencias ?? []).filter((a) => a.estado === "voy").map((a) => a.profiles ?? { nombre: "?" });
   const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-bold";
@@ -15,7 +16,7 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
     <Link
       href={`/planes/${plan.id}`}
       style={{ background: colorCategoria(plan.categoria) }}
-      className={`group block rounded-[2rem] border-2 border-transparent p-5 transition hover:-translate-y-0.5 hover:border-tinta hover:shadow-xl sm:p-6 ${plan.cancelado ? "opacity-60" : ""}`}
+      className={`group block rounded-[2rem] border-2 border-transparent p-5 transition hover:-translate-y-0.5 hover:border-tinta hover:shadow-xl sm:p-6 ${plan.cancelado ? "opacity-60" : pasado ? "opacity-80" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -25,6 +26,7 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
             <p className="flex items-center gap-1.5 text-xs font-semibold text-black/55">
               {etiquetaCategoria(plan.categoria)}
               {plan.cancelado && <span className="rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white">Cancelado</span>}
+              {pasado && !plan.cancelado && <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white">Pasado</span>}
               {!plan.cancelado && lleno && <span className="rounded-full bg-tinta px-2 py-0.5 text-[10px] font-bold text-white">Completo</span>}
             </p>
           </div>
@@ -43,12 +45,12 @@ export default function TarjetaPlan({ plan }: { plan: Plan }) {
         <span className={chip}><span aria-hidden>💶</span> {textoCoste(plan.coste_por_persona)}</span>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-3">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
         <div className="flex items-center gap-3">
           <PilaAvatares perfiles={apuntados} total={ocupadas} />
-          <span className="text-sm font-bold">{ocupadas}/{plan.aforo}</span>
+          <span className="whitespace-nowrap text-sm font-bold">{pasado ? `${ocupadas} ${ocupadas === 1 ? "fue" : "fueron"}` : `${ocupadas}/${plan.aforo}`}</span>
         </div>
-        <span className="btn !py-2.5">Ver plan →</span>
+        <span className="btn ml-auto shrink-0 whitespace-nowrap !py-2.5">{pasado ? "Ver recuerdo" : "Ver plan →"}</span>
       </div>
     </Link>
   );

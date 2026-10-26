@@ -55,12 +55,15 @@ export function textoCoste(c: number) {
   return `${Number(c).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} € por persona`;
 }
 
-/** Enlace de la portada conservando mes, día y categoría. */
-export function ruta(p: { mes?: string; dia?: string; cat?: string }) {
+/** Enlace de la portada conservando mes, día, categoría, vista (pasados), búsqueda y cantidad. */
+export function ruta(p: { mes?: string; dia?: string; cat?: string; v?: string; q?: string; n?: number }) {
   const q = new URLSearchParams();
   if (p.mes) q.set("mes", p.mes);
   if (p.dia) q.set("dia", p.dia);
   if (p.cat) q.set("cat", p.cat);
+  if (p.v) q.set("v", p.v);
+  if (p.q) q.set("q", p.q);
+  if (p.n) q.set("n", String(p.n));
   const s = q.toString();
   return s ? `/?${s}` : "/";
 }

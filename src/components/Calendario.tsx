@@ -62,13 +62,14 @@ export default function Calendario({
           const color = marcas[clave];
           const esHoy = clave === hoy;
           const sel = clave === seleccionado;
+          const pasado = clave < hoy;
           return (
             <Link
               key={clave}
               href={sel ? ruta({ mes, cat }) : ruta({ mes, dia: clave, cat })}
-              aria-label={`${dia}${color ? ", hay planes" : ", libre"}`}
+              aria-label={`${dia}${color ? (pasado ? ", hubo planes" : ", hay planes") : ", libre"}`}
               aria-current={esHoy ? "date" : undefined}
-              style={color && !sel ? { background: color } : undefined}
+              style={color && !sel ? { background: color, opacity: pasado ? 0.45 : 1 } : undefined}
               className={[
                 "relative mx-auto flex h-10 w-full max-w-11 items-center justify-center rounded-full text-sm transition",
                 sel ? "bg-tinta font-extrabold text-white" : color ? "font-extrabold" : "font-semibold hover:bg-white",
@@ -83,7 +84,7 @@ export default function Calendario({
       </div>
 
       <div className="mt-4 flex items-center justify-between text-xs text-apagado">
-        <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded-full bg-[#FF6FA5]" /> Día con plan · colores = categoría</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block h-3 w-3 rounded-full bg-[#FF6FA5]" /> Día con plan · apagado = ya pasó</span>
         {mes !== mesDe(hoy) && <Link href="/" className="font-bold text-tinta underline">Hoy</Link>}
       </div>
     </section>

@@ -112,3 +112,13 @@ export function caducaEn(iso: string | null) {
   const dias = Math.ceil(ms / 864e5);
   return dias <= 1 ? "caduca hoy" : `caduca en ${dias} días`;
 }
+
+/** Instante (ISO, UTC) en que empieza hoy en Madrid, a las 0:00. */
+export function inicioDeHoy() {
+  return madridAISO(`${hoyClave()}T00:00`);
+}
+
+/** Un plan es pasado cuando su día ya ha terminado (a partir de las 0:00 del día siguiente). */
+export function esPasado(iso: string) {
+  return claveDia(iso) < hoyClave();
+}
