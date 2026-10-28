@@ -26,10 +26,10 @@ export default async function Admin() {
   if (!esPropietario && yo?.rol !== "admin") redirect("/");
 
   const [{ data: pendientes }, { data: usadas }, { data: miembros }, { data: registro }, { data: cuentas }] = await Promise.all([
-    supabase.from("invitaciones").select("codigo, etiqueta, caduca_en").eq("activa", true).is("usado_en", null).order("creado_en", { ascending: false }),
+    supabase.from("invitaciones").select("codigo, etiqueta, caduca_en, creador:profiles!creado_por(nombre)").eq("activa", true).is("usado_en", null).order("creado_en", { ascending: false }),
     supabase
       .from("invitaciones")
-      .select("codigo, etiqueta, usado_en, usado:profiles!usado_por(nombre)")
+      .select("codigo, etiqueta, usado_en, usado:profiles!usado_por(nombre), creador:profiles!creado_por(nombre)")
       .not("usado_en", "is", null)
       .order("usado_en", { ascending: false })
       .limit(10),
@@ -62,7 +62,10 @@ export default async function Admin() {
                 return (
                   <li key={i.codigo} className="rounded-2xl bg-suave p-3 lg:bg-white">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="min-w-0 truncate font-bold">{i.etiqueta || "Sin nombre"}</span>
+                      <span className="min-w-0 truncate font-bold">
+                        {i.etiqueta || "Sin nombre"}
+                        <span className="ml-2 text-xs font-semibold text-apagado">por {(i.creador as unknown as { nombre: string } | null)?.nombre ?? "—"}</span>
+                      </span>
                       <span className={`shrink-0 text-xs font-semibold ${caducada ? "text-red-700" : "text-apagado"}`}>{caducaEn(i.caduca_en)}</span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -84,10 +87,15 @@ export default async function Admin() {
             <h3 className="text-sm font-extrabold uppercase tracking-wide text-apagado">Usadas recientemente</h3>
             <ul className="divide-y-2 divide-tinta/5 text-sm">
               {usadas.map((i) => (
-                <li key={i.codigo} className="flex flex-wrap items-baseline gap-x-2 py-2">
-                  <span className="font-bold">{(i.usado as unknown as { nombre: string } | null)?.nombre ?? "Alguien"}</span>
-                  <span className="text-apagado">{i.etiqueta ? `· invitación para ${i.etiqueta}` : ""}</span>
-                  <span className="ml-auto text-xs text-apagado">{hace(i.usado_en!)}</span>
+                <li key={i.codigo} className="py-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+                    <span className="font-bold">{(i.usado as unknown as { nombre: string } | null)?.nombre ?? "Alguien"}</span>
+                    <span className="text-xs text-apagado">{hace(i.usado_en!)}</span>
+                  </div>
+                  <p className="text-xs text-apagado">
+                    Invitada por <b className="text-tinta">{(i.creador as unknown as { nombre: string } | null)?.nombre ?? "el enlace del grupo"}</b>
+                    {i.etiqueta ? ` · para ${i.etiqueta}` : ""}
+                  </p>
                 </li>
               ))}
             </ul>
